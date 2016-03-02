@@ -1,5 +1,7 @@
 package com.eaglesakura.android.rx;
 
+import com.eaglesakura.android.rx.error.TaskCanceledException;
+
 import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
@@ -72,8 +74,12 @@ public class RxTaskBuilder<T> {
                 try {
                     mTask.mState = RxTask.State.Running;
 
-                    it.onNext(subscribe.call(mTask));
-                    it.onCompleted();
+                    T result = subscribe.call(mTask);
+                    if (mTask.isCanceled()) {
+                        throw new TaskCanceledException();
+                    } else {
+                        it.onNext(result);
+                    }
                 } catch (Throwable e) {
                     it.onError(e);
                 }

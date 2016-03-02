@@ -105,6 +105,17 @@ public class RxTask<T> {
     }
 
     /**
+     * awaitを行い、結果を捨てる
+     */
+    public void safeAwait() {
+        try {
+            await();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * 処理の完了待ちを行う
      */
     public T await() throws Throwable {
