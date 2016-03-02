@@ -46,6 +46,10 @@ public class SubscriptionController {
         return mThreadController;
     }
 
+    public Handler getHandler() {
+        return mHandler;
+    }
+
     /**
      * 指定したコールバック受付が強制キャンセルならばtrue
      *

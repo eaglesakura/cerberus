@@ -138,19 +138,22 @@ public class RxTaskBuilder<T> {
         // キャンセルを購読対象と同期させる
         mTask.mSubscribeCancelSignal = (task) -> mSubscription.isCanceled(mTask.mObserveTarget);
 
-        final Subscription subscribe = mObservable.subscribe(
-                // next = completeed
-                next -> {
-                    mTask.setResult(next);
-                },
-                // error
-                error -> {
-                    mTask.setError(error);
-                }
-        );
+        // 開始タイミングをズラす
+        mSubscription.getHandler().post(() -> {
+            final Subscription subscribe = mObservable.subscribe(
+                    // next = completeed
+                    next -> {
+                        mTask.setResult(next);
+                    },
+                    // error
+                    error -> {
+                        mTask.setError(error);
+                    }
+            );
 
-        // 購読対象に追加
-        mSubscription.add(subscribe);
+            // 購読対象に追加
+            mSubscription.add(subscribe);
+        });
         return mTask;
     }
 }
