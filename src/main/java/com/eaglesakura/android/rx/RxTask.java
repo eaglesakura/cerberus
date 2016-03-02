@@ -9,6 +9,8 @@ import rx.Observable;
  */
 public class RxTask<T> {
 
+    SubscriptionController mSubscription;
+
     /**
      * 外部から指定されたキャンセルチェック
      */
@@ -43,6 +45,26 @@ public class RxTask<T> {
      */
     Observable<T> mObservable;
 
+    /**
+     * 完了時処理を記述する
+     */
+    RxTask.Action1<T> mCompletedCallback;
+
+    /**
+     * キャンセル時の処理を記述する
+     */
+    RxTask.Action0<T> mCancelCallback;
+
+    /**
+     * エラー時の処理を記述する
+     */
+    RxTask.ErrorAction<T> mErrorCallback;
+
+    /**
+     * 最終的に必ず呼び出される処理
+     */
+    RxTask.Action0 mFinalizeCallback;
+
     public enum State {
         /**
          * タスクを生成中
@@ -63,6 +85,9 @@ public class RxTask<T> {
          * 完了
          */
         Finished,
+    }
+
+    RxTask() {
     }
 
     /**
@@ -119,6 +144,128 @@ public class RxTask<T> {
         }
 
         return false;
+    }
+
+    public boolean isFinished() {
+        synchronized (this) {
+            return mState == State.Finished;
+        }
+    }
+
+    public boolean hasError() {
+        synchronized (this) {
+            return mError != null;
+        }
+    }
+
+    private void handleCanceled() {
+        if (mCancelCallback == null || !isCanceled()) {
+            return;
+        }
+        mSubscription.run(mObserveTarget, () -> {
+            mCancelCallback.call(this);
+        });
+    }
+
+    private void handleCompleted(T next) {
+        if (mCompletedCallback == null || isCanceled()) {
+            return;
+        }
+
+        mSubscription.run(mObserveTarget, () -> {
+            mCompletedCallback.call(next, this);
+        });
+    }
+
+    private void handleFailed(Throwable error) {
+        // タスクがキャンセルされた場合
+        if (mErrorCallback == null || isCanceled()) {
+            return;
+        }
+
+        mSubscription.run(mObserveTarget, () -> {
+            mErrorCallback.call(error, this);
+        });
+
+    }
+
+    private void handleFinalize() {
+        if (mFinalizeCallback != null) {
+            mSubscription.run(mObserveTarget, () -> {
+                mFinalizeCallback.call(this);
+            });
+        }
+    }
+
+
+    public RxTask<T> completed(Action1<T> completedCallback) {
+        synchronized (this) {
+            mCompletedCallback = completedCallback;
+
+            if (mState == RxTask.State.Finished) {
+                // タスクが終わってしまっているので、ハンドリングも行う
+                if (!isCanceled() && !hasError()) {
+                    handleCompleted(getResult());
+                }
+            }
+
+            return this;
+        }
+    }
+
+    public RxTask<T> canceled(Action0<T> cancelCallback) {
+        synchronized (this) {
+            mCancelCallback = cancelCallback;
+            if (mState == RxTask.State.Finished && isCanceled()) {
+                handleCanceled();
+            }
+            return this;
+        }
+    }
+
+    public RxTask<T> failed(ErrorAction<T> errorCallback) {
+        synchronized (this) {
+            mErrorCallback = errorCallback;
+            if (mState == RxTask.State.Finished) {
+                // タスクが終わってしまっているので、ハンドリングする
+                if (!isCanceled() && hasError()) {
+                    handleFailed(getError());
+                }
+            }
+
+            return this;
+        }
+    }
+
+    public RxTask<T> finalized(Action0 finalizeCallback) {
+        synchronized (this) {
+            mFinalizeCallback = finalizeCallback;
+            if (mState == State.Finished) {
+                handleFinalize();
+            }
+            return this;
+        }
+    }
+
+    void setResult(T result) {
+        synchronized (this) {
+            mState = State.Finished;
+            mResult = result;
+
+            handleCanceled();
+            handleCompleted(result);
+            handleFinalize();
+        }
+    }
+
+    void setError(Throwable error) {
+        synchronized (this) {
+            mError = error;
+
+            handleCanceled();
+            handleFailed(error);
+            handleFinalize();
+        }
     }
 
     /**
