@@ -89,6 +89,8 @@ android.libraryVariants.all { variant ->
         exclude '**/DaoSession.java' /* ignore greenDAO */
         exclude '**/R.java' /* ignore greenDAO */
 
+
+        options.addStringOption('Xdoclint:none', '-quiet')
         options.encoding = "UTF-8"
         project.configure(options) {
             memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PROTECTED
