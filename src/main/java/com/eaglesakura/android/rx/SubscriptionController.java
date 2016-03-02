@@ -11,6 +11,11 @@ import rx.Subscription;
 import rx.subjects.BehaviorSubject;
 import rx.subscriptions.CompositeSubscription;
 
+/**
+ * 実行対象のスレッドと、コールバック対象のスレッドをそれぞれ管理する。
+ *
+ * Fragment等と関連付けられ、そのライフサイクルを離れると自動的にコールバックを呼びださなくする。
+ */
 public class SubscriptionController {
     private CompositeSubscription mSubscription = new CompositeSubscription();
 

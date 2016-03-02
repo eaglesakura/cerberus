@@ -25,7 +25,7 @@ public enum SubscribeTarget {
     Parallels {
         @Override
         int getKeepAliveMs() {
-            return 1000 * 1;
+            return 1000 * 5;
         }
 
         @Override
@@ -40,7 +40,7 @@ public enum SubscribeTarget {
     GlobalPipeline {
         @Override
         int getKeepAliveMs() {
-            return 1000 * 1;
+            return 1000 * 3;
         }
 
         @Override
@@ -55,7 +55,7 @@ public enum SubscribeTarget {
     GlobalParallels {
         @Override
         int getKeepAliveMs() {
-            return 1000 * 1;
+            return 1000 * 3;
         }
 
         @Override
