@@ -173,8 +173,10 @@ public class SubscriptionController {
         void run(Runnable callback) {
             if (isPending()) {
                 mPendings.add(callback);
-            } else {
+            } else if (Thread.currentThread().equals(mHandler.getLooper().getThread())) {
                 callback.run();
+            } else {
+                mHandler.post(callback);
             }
         }
     }

@@ -22,6 +22,11 @@ public class RxTaskBuilder<T> {
     RxTask.Action1<T> mCompletedCallback;
 
     /**
+     * キャンセル時の処理を記述する
+     */
+    RxTask.Action0<T> mCancelCallback;
+
+    /**
      * エラー時の処理を記述する
      */
     RxTask.ErrorAction<T> mErrorCallback;
@@ -62,6 +67,14 @@ public class RxTaskBuilder<T> {
     }
 
     /**
+     * ユーザのキャンセルチェックを有効化する
+     */
+    public RxTaskBuilder<T> cancelSignal(RxTask.CancelSignal signal) {
+        mTask.mUserCancelSignal = signal;
+        return this;
+    }
+
+    /**
      * 処理にタイムアウトを付与する
      */
     public RxTaskBuilder<T> timeout(long timeoutMs) {
@@ -74,13 +87,15 @@ public class RxTaskBuilder<T> {
      */
     public RxTaskBuilder<T> async(RxTask.Async<T> subscribe) {
         mObservable = Observable.create((Subscriber<? super T> it) -> {
-            try {
-                mTask.mState = RxTask.State.Running;
+            synchronized (mTask) {
+                try {
+                    mTask.mState = RxTask.State.Running;
 
-                it.onNext(subscribe.call(mTask));
-                it.onCompleted();
-            } catch (Throwable e) {
-                it.onError(e);
+                    it.onNext(subscribe.call(mTask));
+                    it.onCompleted();
+                } catch (Throwable e) {
+                    it.onError(e);
+                }
             }
         })
                 .subscribeOn(mSubscription.getThreadController().getScheduler(mThreadTarget))
@@ -100,15 +115,44 @@ public class RxTaskBuilder<T> {
      * 戻り値からの処理を記述する
      */
     public RxTaskBuilder<T> completed(RxTask.Action1<T> callback) {
-        mCompletedCallback = callback;
+        synchronized (mTask) {
+            mCompletedCallback = callback;
+            if (mTask.mState == RxTask.State.Finished) {
+                // タスクが終わってしまっているので、ハンドリングも行う
+                if (!mTask.isCanceled() && mTask.getError() == null) {
+                    callCompleted(mTask.getResult());
+                }
+            }
+        }
         return this;
     }
 
     /**
      * エラーハンドリングを記述する
      */
-    public RxTaskBuilder<T> errored(RxTask.ErrorAction<T> callback) {
-        mErrorCallback = callback;
+    public RxTaskBuilder<T> failed(RxTask.ErrorAction<T> callback) {
+        synchronized (mTask) {
+            mErrorCallback = callback;
+            if (mTask.mState == RxTask.State.Finished) {
+                // タスクが終わってしまっているので、ハンドリングする
+                if (!mTask.isCanceled() && mTask.getError() != null) {
+                    callFailed(mTask.getError());
+                }
+            }
+        }
+        return this;
+    }
+
+    /**
+     * キャンセル時のハンドリングを設定する
+     */
+    public RxTaskBuilder<T> canceled(RxTask.Action0<T> callback) {
+        synchronized (mTask) {
+            mCancelCallback = callback;
+            if (mTask.mState == RxTask.State.Finished && mTask.isCanceled()) {
+                callCanceled();
+            }
+        }
         return this;
     }
 
@@ -120,47 +164,74 @@ public class RxTaskBuilder<T> {
         return this;
     }
 
+    private void callCanceled() {
+        if (mCancelCallback == null || !mTask.isCanceled()) {
+            return;
+        }
+        mSubscription.run(mTask.mObserveTarget, () -> {
+            mCancelCallback.call(mTask);
+        });
+    }
+
+    private void callCompleted(T next) {
+        if (mCompletedCallback == null || mTask.isCanceled()) {
+            return;
+        }
+
+        mSubscription.run(mTask.mObserveTarget, () -> {
+            mCompletedCallback.call(next, mTask);
+        });
+    }
+
+    private void callFailed(Throwable error) {
+        // タスクがキャンセルされた場合
+        if (mErrorCallback == null || mTask.isCanceled()) {
+            return;
+        }
+
+        mSubscription.run(mTask.mObserveTarget, () -> {
+            mErrorCallback.call(error, mTask);
+        });
+
+    }
+
+    private void callFinalize() {
+        if (mFinalizeCallback != null) {
+            mSubscription.run(mTask.mObserveTarget, () -> {
+                mFinalizeCallback.call(mTask);
+            });
+        }
+    }
+
     /**
      * セットアップを完了し、処理を開始する
      */
     public RxTask<T> start() {
         mTask.mState = RxTask.State.Pending;
         // キャンセルを購読対象と同期させる
-        mTask.mSubscribeCancelSignal = () -> mSubscription.isCanceled(mTask.mObserveTarget);
+        mTask.mSubscribeCancelSignal = (task) -> mSubscription.isCanceled(mTask.mObserveTarget);
 
         final Subscription subscribe = mObservable.subscribe(
                 // next = completeed
                 next -> {
-                    mTask.mResult = next;
-                    mTask.mState = RxTask.State.Finished;
+                    synchronized (mTask) {
+                        mTask.mResult = next;
+                        mTask.mState = RxTask.State.Finished;
 
-                    if (mCompletedCallback != null) {
-                        mSubscription.run(mTask.mObserveTarget, () -> {
-                            mCompletedCallback.call(next, mTask);
-                        });
-                    }
-
-                    if (mFinalizeCallback != null) {
-                        mSubscription.run(mTask.mObserveTarget, () -> {
-                            mFinalizeCallback.call(mTask);
-                        });
+                        callCompleted(next);
+                        callCanceled();
+                        callFinalize();
                     }
                 },
                 // error
                 error -> {
-                    mTask.mError = error;
-                    mTask.mState = RxTask.State.Finished;
+                    synchronized (mTask) {
+                        mTask.mError = error;
+                        mTask.mState = RxTask.State.Finished;
 
-                    if (mErrorCallback != null) {
-                        mSubscription.run(mTask.mObserveTarget, () -> {
-                            mErrorCallback.call(error, mTask);
-                        });
-                    }
-
-                    if (mFinalizeCallback != null) {
-                        mSubscription.run(mTask.mObserveTarget, () -> {
-                            mFinalizeCallback.call(mTask);
-                        });
+                        callFailed(error);
+                        callCanceled();
+                        callFinalize();
                     }
                 }
         );

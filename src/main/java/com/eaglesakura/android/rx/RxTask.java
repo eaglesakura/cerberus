@@ -1,5 +1,7 @@
 package com.eaglesakura.android.rx;
 
+import com.eaglesakura.android.rx.error.TaskCanceledException;
+
 import rx.Observable;
 
 /**
@@ -104,11 +106,15 @@ public class RxTask<T> {
      * タスクがキャンセル状態であればtrue
      */
     public boolean isCanceled() {
-        if (mUserCancelSignal != null && mUserCancelSignal.isCanceled()) {
+        if (mUserCancelSignal != null && mUserCancelSignal.isCanceled(this)) {
             return true;
         }
 
-        if (mSubscribeCancelSignal != null & mSubscribeCancelSignal.isCanceled()) {
+        if (mSubscribeCancelSignal != null & mSubscribeCancelSignal.isCanceled(this)) {
+            return true;
+        }
+
+        if (mError != null && (mError instanceof TaskCanceledException)) {
             return true;
         }
 
@@ -149,11 +155,11 @@ public class RxTask<T> {
      * <p/>
      * cancel()メソッドを呼び出すか、このコールバックがisCanceled()==trueになった時点でキャンセル扱いとなる。
      */
-    public interface CancelSignal {
+    public interface CancelSignal<T> {
         /**
          * キャンセルする場合はtrueを返す
          */
-        boolean isCanceled();
+        boolean isCanceled(RxTask<T> task);
     }
 
 }
