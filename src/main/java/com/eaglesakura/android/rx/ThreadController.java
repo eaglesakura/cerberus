@@ -85,9 +85,11 @@ class ThreadController {
 
         public void dispose() {
             synchronized (this) {
-                if (mExecutor != null) {
-                    mExecutor.shutdown();
-                }
+                // MEMO: ThreadPoolは時間経過で自動的に消滅するため、明示的な解放は行わないようにする
+                // これはFire&Forgetでスレッドが処理される前にshutdownされることを防ぐため。
+//                if (mExecutor != null) {
+//                    mExecutor.shutdown();
+//                }
             }
         }
     }
