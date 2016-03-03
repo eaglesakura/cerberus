@@ -14,12 +14,12 @@ public class RxTask<T> {
     /**
      * 外部から指定されたキャンセルチェック
      */
-    CancelSignal mUserCancelSignal;
+    Signal mUserCancelSignal;
 
     /**
      * 購読対象からのキャンセルチェック
      */
-    CancelSignal mSubscribeCancelSignal;
+    Signal mSubscribeCancelSignal;
 
     /**
      * 受信したエラー
@@ -64,6 +64,11 @@ public class RxTask<T> {
      * 最終的に必ず呼び出される処理
      */
     RxTask.Action0 mFinalizeCallback;
+
+    /**
+     * チェーン実行されるタスク
+     */
+    RxTaskBuilder mChainTask;
 
     public enum State {
         /**
@@ -142,11 +147,11 @@ public class RxTask<T> {
      * タスクがキャンセル状態であればtrue
      */
     public boolean isCanceled() {
-        if (mUserCancelSignal != null && mUserCancelSignal.isCanceled(this)) {
+        if (mUserCancelSignal != null && mUserCancelSignal.is(this)) {
             return true;
         }
 
-        if (mSubscribeCancelSignal != null & mSubscribeCancelSignal.isCanceled(this)) {
+        if (mSubscribeCancelSignal != null & mSubscribeCancelSignal.is(this)) {
             return true;
         }
 
@@ -186,6 +191,14 @@ public class RxTask<T> {
         mSubscription.run(mObserveTarget, () -> {
             mCompletedCallback.call(next, this);
         });
+    }
+
+    private void handleChain() {
+        // 連続実行タスクが残っているなら、チェーンで実行を開始する
+        if (mChainTask != null) {
+            mChainTask.start();
+            mChainTask = null;
+        }
     }
 
     private void handleFailed(Throwable error) {
@@ -266,6 +279,9 @@ public class RxTask<T> {
             handleCanceled();
             handleCompleted(result);
             handleFinalize();
+
+            // 次のタスクを実行開始する
+            handleChain();
         }
     }
 
@@ -284,6 +300,13 @@ public class RxTask<T> {
      */
     public interface Async<T> {
         T call(RxTask<T> task) throws Throwable;
+    }
+
+    /**
+     * 非同期連続処理を記述する
+     */
+    public interface AsyncChain<T, R> {
+        R call(T before, RxTask<R> task) throws Throwable;
     }
 
     /**
@@ -309,15 +332,29 @@ public class RxTask<T> {
     }
 
     /**
-     * キャンセルチェック用のコールバック
+     * 非同期処理後のコールバックを記述する
+     */
+    public interface ErrorReturn<T> {
+        T call(Throwable it, RxTask<T> task);
+    }
+
+    /**
+     * 各種チェック用のコールバック関数
      * <p/>
      * cancel()メソッドを呼び出すか、このコールバックがisCanceled()==trueになった時点でキャンセル扱いとなる。
      */
-    public interface CancelSignal<T> {
+    public interface Signal<T> {
         /**
          * キャンセルする場合はtrueを返す
          */
-        boolean isCanceled(RxTask<T> task);
+        boolean is(RxTask<T> task);
     }
 
+
+    /**
+     * リトライチェック用
+     */
+    public interface RetrySignal<T> {
+        boolean is(RxTask<T> task, int count, Throwable error);
+    }
 }
