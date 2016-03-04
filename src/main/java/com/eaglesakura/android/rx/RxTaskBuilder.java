@@ -2,6 +2,8 @@ package com.eaglesakura.android.rx;
 
 import com.eaglesakura.android.rx.error.TaskCanceledException;
 
+import android.os.Looper;
+
 import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
@@ -134,6 +136,12 @@ public class RxTaskBuilder<T> {
      */
     void bindThreadName() {
         if (mTask.mName == null) {
+            return;
+        }
+
+        Thread current = Thread.currentThread();
+        if (current.equals(Looper.getMainLooper().getThread())) {
+            // UIスレッド名は変更できない
             return;
         }
 
