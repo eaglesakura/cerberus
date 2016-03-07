@@ -192,7 +192,7 @@ String dependenceisVersion(String libName, String defVersion) {
 
         // バージョン固定されている場合は"lib:name:1.0.0"とフルで取得できてしまうので、分割して再度最後を取得する
         def version = tokens[tokens.length - 1];
-        if (version.startsWith(basePackageName)) {
+        if (version.startsWith(libName)) {
             def splitVersions = version.split(":");
             version = splitVersions[splitVersions.length - 1];
         }
