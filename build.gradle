@@ -15,13 +15,11 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:1.5.0'
-        classpath "com.eaglesakura:plugin-ci-support:1.0.14"
         classpath 'me.tatarka:gradle-retrolambda:3.2.5' // support Lambda
     }
 }
 
 repositories {
-    maven { url "http://eaglesakura.github.io/maven/" }
     mavenCentral()
 }
 
