@@ -5,20 +5,22 @@
  */
 def ARTIFACT_VERSION = "1.0"
 def ARTIFACT_NAME = file(".").absoluteFile.name
-def ARTIFACT_INSTALL_TARGET = getArtifactInstallTarget()
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     repositories {
+        maven { url "http://eaglesakura.github.io/maven/" }
         jcenter()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:1.5.0'
+        classpath "com.eaglesakura:plugin-ci-support:1.0.14"
         classpath 'me.tatarka:gradle-retrolambda:3.2.5' // support Lambda
     }
 }
 
 repositories {
+    maven { url "http://eaglesakura.github.io/maven/" }
     mavenCentral()
 }
 
@@ -62,9 +64,15 @@ if (!hasProperty("ANDROID_SUPPORT_LIB_VERSION")) {
 }
 
 dependencies {
-//    provided "com.android.support:support-v4:${ANDROID_SUPPORT_LIB_VERSION}"
     compile 'io.reactivex:rxandroid:1.1.+'
     compile 'io.reactivex:rxjava:1.1.+'
+
+    // Unit Testing
+    testCompile "com.eaglesakura:simple-logger:1.1.+"
+    testCompile "com.eaglesakura:simple-utils:1.1.+"
+    testCompile "com.eaglesakura:android-simple-utils:1.0.+"
+    testCompile 'junit:junit:4.12'
+    testCompile "org.robolectric:robolectric:3.0"
 }
 
 apply plugin: 'maven'
@@ -117,7 +125,7 @@ android.libraryVariants.all { variant ->
 uploadArchives {
     repositories {
         mavenDeployer {
-            repository(url: uri(ARTIFACT_INSTALL_TARGET))
+            repository(url: uri(getArtifactInstallTarget()))
             pom.version = ARTIFACT_VERSION + getArtifactVersionSuffix()
             pom.groupId = "com.eaglesakura"
             pom.artifactId = ARTIFACT_NAME
@@ -133,6 +141,20 @@ uploadArchives {
             license {
                 name 'MIT License'
                 url 'https://raw.githubusercontent.com/eaglesakura/onactivityresult-invoke/master/LICENSE.txt'
+            }
+        }
+        dependencies {
+            dependency {
+                groupId 'io.reactivex'
+                artifactId = 'rxandroid'
+                version = com.eaglesakura.gradle.helper.Dependencies.getVersion(file("dependencies.txt"), "io.reactivex:rxandroid", "1.1.+")
+                scope = 'compile'
+            }
+            dependency {
+                groupId 'io.reactivex'
+                artifactId = 'rxandroid'
+                version = com.eaglesakura.gradle.helper.Dependencies.getVersion(file("dependencies.txt"), "io.reactivex:rxjava", "1.1.+")
+                scope = 'compile'
             }
         }
     }

@@ -1,8 +1,8 @@
 package com.eaglesakura.android.rx;
 
-import com.eaglesakura.android.rx.error.TaskCanceledException;
-
 import android.os.Looper;
+
+import com.eaglesakura.android.rx.error.TaskCanceledException;
 
 import java.util.concurrent.TimeUnit;
 
@@ -89,7 +89,7 @@ public class RxTaskBuilder<T> {
 
     /**
      * タスク名を指定する。
-     *
+     * <p>
      * タスク名はそのままスレッド名として利用される。
      */
     public RxTaskBuilder<T> name(String name) {
@@ -131,7 +131,7 @@ public class RxTaskBuilder<T> {
 
     /**
      * スレッド名を指定する
-     *
+     * <p>
      * 指定されていない場合は何もしない。
      */
     void bindThreadName() {
@@ -168,6 +168,7 @@ public class RxTaskBuilder<T> {
                         throw new TaskCanceledException();
                     } else {
                         it.onNext(result);
+                        it.onCompleted();
                     }
                 } catch (Throwable e) {
                     it.onError(e);
@@ -239,22 +240,21 @@ public class RxTaskBuilder<T> {
     /**
      * セットアップを完了し、処理を開始する
      */
-    public RxTask start() {
+    public RxTask<T> start() {
+        // 実行準備する
+        mTask.mState = RxTask.State.Pending;
+        // キャンセルを購読対象と同期させる
+        mTask.mSubscribeCancelSignal = (task) -> mSubscription.isCanceled(mTask.mObserveTarget);
+
         if (mParentBuilder != null && !mParentBuilder.isStartedTask()) {
             // 親がいるなら、親を開始する
-            return mParentBuilder.start();
+            mParentBuilder.start();
         } else {
             if (isStartedTask()) {
                 // 既にタスクが起動済みのため、再度起動することはできない
                 throw new IllegalStateException();
             }
-
-            // 自分が最上位なので、自分が実行を開始する
-            mTask.mState = RxTask.State.Pending;
-            // キャンセルを購読対象と同期させる
-            mTask.mSubscribeCancelSignal = (task) -> mSubscription.isCanceled(mTask.mObserveTarget);
             mStartedTask = true;
-
             // 開始タイミングをズラす
             mSubscription.getHandler().post(() -> {
                 final Subscription subscribe = mObservable.subscribe(
@@ -271,8 +271,7 @@ public class RxTaskBuilder<T> {
                 // 購読対象に追加
                 mSubscription.add(mTask.mObserveTarget, subscribe);
             });
-            return mTask;
         }
-
+        return mTask;
     }
 }

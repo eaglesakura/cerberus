@@ -2,6 +2,7 @@ package com.eaglesakura.android.rx;
 
 
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ import rx.subscriptions.CompositeSubscription;
 
 /**
  * 実行対象のスレッドと、コールバック対象のスレッドをそれぞれ管理する。
- *
+ * <p>
  * Fragment等と関連付けられ、そのライフサイクルを離れると自動的にコールバックを呼びださなくする。
  */
 public class SubscriptionController {
@@ -43,6 +44,18 @@ public class SubscriptionController {
         for (ObserveTarget obs : ObserveTarget.values()) {
             mStateControllers.add(new StateController(obs));
         }
+    }
+
+    /**
+     * ユニットテスト用のハンドラを構築する
+     *
+     * @return
+     */
+    public SubscriptionController startUnitTest() {
+        HandlerThread handlerThread = new HandlerThread("UnitTestCallback");
+        handlerThread.start();
+        mHandler = new Handler(handlerThread.getLooper());
+        return this;
     }
 
     public ThreadController getThreadController() {
@@ -94,7 +107,7 @@ public class SubscriptionController {
 
     /**
      * 実行クラスを渡し、処理を行わせる。
-     *
+     * <p>
      * 実行保留中であれば一旦キューに貯め、resumeのタイミングでキューを全て実行させる。
      */
     public void run(ObserveTarget target, Runnable callback) {
