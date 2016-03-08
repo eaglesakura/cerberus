@@ -47,9 +47,14 @@ public class SubscriptionController {
     }
 
     /**
+     * 現在認識されているステートを取得する
+     */
+    public LifecycleState getState() {
+        return mState;
+    }
+
+    /**
      * ユニットテスト用のハンドラを構築する
-     *
-     * @return
      */
     public SubscriptionController startUnitTest() {
         HandlerThread handlerThread = new HandlerThread("UnitTestCallback");
@@ -151,28 +156,22 @@ public class SubscriptionController {
                 return false;
             }
 
-            final int beginStateOrder;
-            final int endStateOrder;
-
             switch (mCallbackTarget) {
+                // オブジェクトがForegroundにあるなら
                 case Foreground:
-                case CurrentForeground:
-                    beginStateOrder = LifecycleState.OnResumed.ordinal();
-                    endStateOrder = LifecycleState.OnPaused.ordinal();
-                    break;
-                case Alive:
-                    beginStateOrder = LifecycleState.OnCreated.ordinal();
-                    endStateOrder = LifecycleState.OnDestroyed.ordinal();
-                    break;
+                case CurrentForeground: {
+                    return mState.ordinal() < LifecycleState.OnResumed.ordinal()
+                            || mState.ordinal() >= LifecycleState.OnPaused.ordinal();
+                }
+                // オブジェクトが生きているなら
+                case Alive: {
+                    return mState.ordinal() < LifecycleState.OnCreated.ordinal()
+                            || mState.ordinal() >= LifecycleState.OnDestroyed.ordinal();
+                }
                 default:
                     // not impl
                     throw new IllegalStateException();
             }
-
-            final int currentOrder = mState.ordinal();
-
-            return currentOrder < beginStateOrder
-                    || currentOrder > endStateOrder;
         }
 
         void onNext() {

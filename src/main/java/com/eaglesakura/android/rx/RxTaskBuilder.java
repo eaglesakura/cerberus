@@ -1,8 +1,8 @@
 package com.eaglesakura.android.rx;
 
-import android.os.Looper;
-
 import com.eaglesakura.android.rx.error.TaskCanceledException;
+
+import android.os.Looper;
 
 import java.util.concurrent.TimeUnit;
 
@@ -84,6 +84,7 @@ public class RxTaskBuilder<T> {
      */
     public RxTaskBuilder<T> timeout(long timeoutMs) {
         mObservable.timeout(timeoutMs, TimeUnit.MILLISECONDS);
+        mTask.mTimeoutMs = timeoutMs;
         return this;
     }
 

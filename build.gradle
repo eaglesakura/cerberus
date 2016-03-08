@@ -152,7 +152,7 @@ uploadArchives {
             }
             dependency {
                 groupId 'io.reactivex'
-                artifactId = 'rxandroid'
+                artifactId = 'rxjava'
                 version = dependenceisVersion("io.reactivex:rxjava", "1.1.+")
                 scope = 'compile'
             }

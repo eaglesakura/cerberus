@@ -83,6 +83,11 @@ public class RxTask<T> {
      */
     String mName = "Task::" + getClass().getName();
 
+    /**
+     * デフォルトのタイムアウト指定
+     */
+    long mTimeoutMs = 1000 * 60 * 60;
+
     public enum State {
         /**
          * タスクを生成中
@@ -147,9 +152,6 @@ public class RxTask<T> {
 
     /**
      * awaitを行い、結果を捨てる
-     *
-     * @param timeoutMs
-     * @return
      */
     public boolean safeAwait(long timeoutMs) {
         try {
@@ -176,10 +178,6 @@ public class RxTask<T> {
      * 処理待ちを行う
      * <p>
      * timeout等やコールバックと同居するため、実装はただのwaitである。
-     *
-     * @param timeoutMs
-     * @return
-     * @throws Throwable
      */
     public T await(long timeoutMs) throws Throwable {
         final long START_TIME = System.currentTimeMillis();
@@ -190,11 +188,12 @@ public class RxTask<T> {
             }
         }
 
+        throwIfError();
+
         if (!isFinished()) {
             throw new TaskTimeoutException();
         }
 
-        throwIfError();
         return mResult;
     }
 
@@ -202,13 +201,7 @@ public class RxTask<T> {
      * 処理の完了待ちを行う
      */
     public T await() throws Throwable {
-        synchronized (this) {
-            if (isFinished()) {
-                throwIfError();
-                return mResult;
-            }
-        }
-        return mObservable.toBlocking().first();
+        return await(mTimeoutMs);
     }
 
     /**
