@@ -37,21 +37,18 @@ dependencies {
     compile 'io.reactivex:rxjava:1.1.+'
 
     if (EGLIBRARY_COMPILE_LOCAL) {
+        testCompile project(":eglibrary:android-unittest-support")
+
         androidTestCompile project(":eglibrary:android-simple-utils")
         androidTestCompile project(":eglibrary:android-thread")
         androidTestCompile project(":eglibrary:android-devicetest-support")
-    } else {
+    } else {w
+        testCompile 'com.eaglesakura:android-unittest-support:1.+'
+
         androidTestCompile 'com.eaglesakura:android-simple-utils:1.+'
         androidTestCompile 'com.eaglesakura:android-thread:1.+'
         androidTestCompile 'com.eaglesakura:android-devicetest-support:1.+'
     }
-
-    // Unit Testing
-    testCompile "com.eaglesakura:simple-logger:1.1.+"
-    testCompile "com.eaglesakura:simple-utils:1.1.+"
-    testCompile "com.eaglesakura:android-simple-utils:1.0.+"
-    testCompile 'junit:junit:4.12'
-    testCompile "org.robolectric:robolectric:3.0"
 }
 
 android {
