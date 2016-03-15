@@ -42,7 +42,7 @@ dependencies {
         androidTestCompile project(":eglibrary:android-simple-utils")
         androidTestCompile project(":eglibrary:android-thread")
         androidTestCompile project(":eglibrary:android-devicetest-support")
-    } else {w
+    } else {
         testCompile 'com.eaglesakura:android-unittest-support:1.+'
 
         androidTestCompile 'com.eaglesakura:android-simple-utils:1.+'
