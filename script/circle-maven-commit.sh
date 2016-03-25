@@ -12,6 +12,7 @@ else
 fi
 
 cd maven
+date > .cache_ctrl
 git add .
 git commit -am "[Circle-CI] add $CIRCLE_PROJECT_REPONAME $CIRCLE_BRANCH.$CIRCLE_BUILD_NUM"
 git push origin gh-pages
