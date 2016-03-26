@@ -7,6 +7,7 @@ import android.os.Looper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import rx.Subscription;
 import rx.subjects.BehaviorSubject;
@@ -117,6 +118,34 @@ public class SubscriptionController {
      */
     public void run(ObserveTarget target, Runnable callback) {
         mStateControllers.get(target.ordinal()).run(callback);
+    }
+
+    /**
+     * 実行クラスを渡し、実行待ちを行う。
+     *
+     * デッドロック等の事情によりタイムアウトやフリーズの原因になるので、実行には注意すること。
+     *
+     * @param target    実行条件
+     * @param callback  実行内容
+     * @param timeoutMs 待ち時間
+     */
+    public void runWithWait(ObserveTarget target, Runnable callback, long timeoutMs) throws TimeoutException {
+        Object lock = new Object();
+        run(target, () -> {
+            try {
+                callback.run();
+            } finally {
+                synchronized (lock) {
+                    lock.notifyAll();
+                }
+            }
+        });
+        synchronized (lock) {
+            try {
+                lock.wait(timeoutMs);
+            } catch (Exception e) {
+            }
+        }
     }
 
     /**
