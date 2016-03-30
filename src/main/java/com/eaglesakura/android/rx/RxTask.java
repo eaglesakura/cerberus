@@ -221,6 +221,15 @@ public class RxTask<T> {
     }
 
     /**
+     * タスクがキャンセルされていたら例外を投げて処理を強制終了する
+     */
+    public void throwIfCanceled() throws TaskCanceledException {
+        if (isCanceled()) {
+            throw new TaskCanceledException();
+        }
+    }
+
+    /**
      * タスクがキャンセル状態であればtrue
      */
     public boolean isCanceled() {
