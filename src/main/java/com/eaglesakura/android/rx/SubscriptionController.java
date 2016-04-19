@@ -42,7 +42,7 @@ public class SubscriptionController {
      */
     private Handler mHandler = new Handler(Looper.getMainLooper());
 
-    private Observable<LifecycleState> mObservable;
+    private Observable<LifecycleEvent> mObservable;
 
     public SubscriptionController() {
         for (ObserveTarget obs : ObserveTarget.values()) {
@@ -84,21 +84,21 @@ public class SubscriptionController {
         return mStateControllers.get(observeTarget.ordinal()).isCanceled();
     }
 
-    public Observable<LifecycleState> getObservable() {
+    public Observable<LifecycleEvent> getObservable() {
         return mObservable;
     }
 
     /**
      * ライフサイクルをバインドする
      */
-    public SubscriptionController bind(BehaviorSubject<LifecycleState> behavior) {
+    public SubscriptionController bind(BehaviorSubject<LifecycleEvent> behavior) {
         mObservable = behavior.asObservable();
         mObservable.subscribe(next -> {
             // 継承されたActivityやFragmentはsuper.onの呼び出しで前後が生じるため、統一させるために必ずワンテンポ処理を遅らせる
             mHandler.post(() -> {
-                mState = next;
+                mState = next.getState();
 
-                if (next == LifecycleState.OnDestroyed) {
+                if (mState == LifecycleState.OnDestroyed) {
                     mThreadController.dispose();
                     mSubscription.unsubscribe();
                 }

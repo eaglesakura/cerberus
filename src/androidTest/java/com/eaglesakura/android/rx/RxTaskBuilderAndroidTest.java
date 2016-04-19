@@ -2,6 +2,7 @@ package com.eaglesakura.android.rx;
 
 import com.eaglesakura.android.devicetest.ModuleTestCase;
 import com.eaglesakura.android.rx.error.TaskCanceledException;
+import com.eaglesakura.android.rx.event.LifecycleEventImpl;
 import com.eaglesakura.android.thread.ui.UIHandler;
 import com.eaglesakura.android.util.AndroidThreadUtil;
 import com.eaglesakura.thread.Holder;
@@ -13,7 +14,7 @@ import rx.subjects.BehaviorSubject;
 public class RxTaskBuilderAndroidTest extends ModuleTestCase {
 
     class LifecycleItem {
-        BehaviorSubject<LifecycleState> mSubject = BehaviorSubject.create(LifecycleState.NewObject);
+        BehaviorSubject<LifecycleEvent> mSubject = BehaviorSubject.create(new LifecycleEventImpl(LifecycleState.NewObject));
         SubscriptionController mSubscriptionController = new SubscriptionController();
 
         public LifecycleItem() {
@@ -37,7 +38,7 @@ public class RxTaskBuilderAndroidTest extends ModuleTestCase {
 
         void next(LifecycleState state) {
             UIHandler.postUI(() -> {
-                mSubject.onNext(state);
+                mSubject.onNext(new LifecycleEventImpl(state));
             });
 
             while (state != mSubscriptionController.getState()) {
