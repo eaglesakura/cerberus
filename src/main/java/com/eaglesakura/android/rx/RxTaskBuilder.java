@@ -2,6 +2,7 @@ package com.eaglesakura.android.rx;
 
 import com.eaglesakura.android.rx.error.TaskCanceledException;
 
+import android.app.Dialog;
 import android.os.Looper;
 
 import java.util.concurrent.TimeUnit;
@@ -77,6 +78,21 @@ public class RxTaskBuilder<T> {
     public RxTaskBuilder<T> cancelSignal(RxTask.Signal signal) {
         mTask.mUserCancelSignal = signal;
         return this;
+    }
+
+    /**
+     * ユーザーのキャンセルチェックをダイアログと同期する
+     */
+    public RxTaskBuilder<T> cancelSignal(Dialog dialog) {
+        return cancelSignal(task -> !dialog.isShowing());
+    }
+
+    /**
+     * ダイアログに合わせてキャンセルチェックとキャンセル挙動を設定する
+     */
+    public RxTaskBuilder<T> cancelSignal(Dialog dialog, RxTask.Action0<T> callback) {
+        return canceled(callback).
+                cancelSignal(task -> !dialog.isShowing());
     }
 
     /**
