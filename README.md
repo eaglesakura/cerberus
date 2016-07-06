@@ -10,6 +10,15 @@ RxAndroidでActivity/Fragment等を扱う際に必要になるライフサイク
 
 retro-lambdaを使用し、ラムダ式を用いることでコードの可読性の向上が行えます。
 
+タスクの実行結果ごとにコールバックされる条件
+
+| | タスク成功 | タスク失敗 | タスクキャンセル |
+| --- | --- | --- | --- |
+| completed() | 実行 | - | - |
+| failed()  | - | 実行| - |
+| canceled() | - | - | 実行 |
+| finalized() | 実行 | 実行 | - |
+
 ## LICENSE
 
 プロジェクトの都合に応じて、下記のどちらかを選択してください。
@@ -29,7 +38,6 @@ retro-lambdaを使用し、ラムダ式を用いることでコードの可読�
 
  1. repositoriesブロックにリポジトリURLを追加する
  1. dependenciesブロックに任意バージョンのライブラリを追加する
- 	* 現時点では1.0.+系列
 
 <pre>
 repositories {
@@ -38,7 +46,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.eaglesakura:rxandroid-support:1.0.+'	// add library
+    compile 'com.eaglesakura:rxandroid-support:1.2.+'	// add library
 }
 
 

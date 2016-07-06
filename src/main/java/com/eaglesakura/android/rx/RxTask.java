@@ -4,6 +4,11 @@ import com.eaglesakura.android.rx.error.RxTaskException;
 import com.eaglesakura.android.rx.error.TaskCanceledException;
 import com.eaglesakura.android.rx.error.TaskTimeoutException;
 
+import android.app.Activity;
+
+import java.util.HashSet;
+import java.util.Set;
+
 import rx.Observable;
 
 /**
@@ -19,7 +24,7 @@ public class RxTask<T> {
     /**
      * 外部から指定されたキャンセルチェック
      */
-    Signal mUserCancelSignal;
+    Set<Signal> mUserCancelSignals = new HashSet<>();
 
     /**
      * 購読対象からのキャンセルチェック
@@ -233,8 +238,11 @@ public class RxTask<T> {
      * タスクがキャンセル状態であればtrue
      */
     public boolean isCanceled() {
-        if (mUserCancelSignal != null && mUserCancelSignal.is(this)) {
-            return true;
+        // キャンセルシグナルに一つでも引っかかったらtrue
+        for (Signal signal : mUserCancelSignals) {
+            if (signal.is(this)) {
+                return true;
+            }
         }
 
         if (mSubscribeCancelSignal != null & mSubscribeCancelSignal.is(this)) {
@@ -261,52 +269,42 @@ public class RxTask<T> {
     }
 
     private void handleCanceled() {
-        if (mCancelCallback == null || !isCanceled()) {
+        if (mCancelCallback == null) {
             return;
         }
-        mSubscription.run(mObserveTarget, () -> {
-            mCancelCallback.call(this);
-        });
+        mCancelCallback.call(this);
     }
 
     private void handleCompleted(T next) {
-        if (mCompletedCallback == null || isCanceled()) {
+        if (mCompletedCallback == null) {
             return;
         }
 
-        mSubscription.run(mObserveTarget, () -> {
-            mCompletedCallback.call(next, this);
-        });
+        mCompletedCallback.call(next, this);
     }
 
     private void handleChain() {
         // 連続実行タスクが残っているなら、チェーンで実行を開始する
-        mSubscription.run(mObserveTarget, () -> {
-            if (mChainTask != null) {
-                mChainTask.start();
-                mChainTask = null;
-            }
-        });
+        if (mChainTask != null) {
+            mChainTask.start();
+            mChainTask = null;
+        }
     }
 
     private void handleFailed(Throwable error) {
         // タスクがキャンセルされた場合
-        if (mErrorCallback == null || isCanceled()) {
+        if (mErrorCallback == null) {
             return;
         }
 
-        mSubscription.run(mObserveTarget, () -> {
-            mErrorCallback.call(error, this);
-        });
-
+        mErrorCallback.call(error, this);
     }
 
     private void handleFinalize() {
-        if (mFinalizeCallback != null) {
-            mSubscription.run(mObserveTarget, () -> {
-                mFinalizeCallback.call(this);
-            });
+        if (mFinalizeCallback == null) {
+            return;
         }
+        mFinalizeCallback.call(this);
     }
 
 
@@ -341,10 +339,11 @@ public class RxTask<T> {
             if (mState == RxTask.State.Finished) {
                 // タスクが終わってしまっているので、ハンドリングする
                 if (!isCanceled() && hasError()) {
-                    handleFailed(getError());
+                    mSubscription.run(mObserveTarget, () -> {
+                        handleFailed(getError());
+                    });
                 }
             }
-
             return this;
         }
     }
@@ -353,7 +352,9 @@ public class RxTask<T> {
         synchronized (this) {
             mFinalizeCallback = finalizeCallback;
             if (mState == State.Finished) {
-                handleFinalize();
+                mSubscription.run(mObserveTarget, () -> {
+                    handleFinalize();
+                });
             }
             return this;
         }
@@ -361,30 +362,41 @@ public class RxTask<T> {
 
     void setResult(T result) {
         synchronized (this) {
-            mState = State.Finished;
-            mResult = result;
+            mSubscription.run(mObserveTarget, () -> {
+                mState = State.Finished;
+                mResult = result;
 
-            handleCanceled();
-            try {
-                handleCompleted(result);
-                handleFinalize();
-                // 次のタスクを実行開始する
-                handleChain();
-            } catch (Throwable error) {
-                // Completed処理に失敗した
-                mResult = null;
-                setError(error);
-            }
+                if (isCanceled()) {
+                    handleCanceled();
+                } else {
+                    try {
+                        handleCompleted(result);
+                        handleFinalize();
+                        // 次のタスクを実行開始する
+                        handleChain();
+                    } catch (Throwable error) {
+                        // Completed処理に失敗した
+                        mResult = null;
+                        setError(error);
+                    }
+                }
+            });
         }
     }
 
     void setError(Throwable error) {
         synchronized (this) {
-            mError = error;
+            mSubscription.run(mObserveTarget, () -> {
+                mState = State.Finished;
+                mError = error;
 
-            handleCanceled();
-            handleFailed(error);
-            handleFinalize();
+                if (isCanceled()) {
+                    handleCanceled();
+                } else {
+                    handleFailed(error);
+                    handleFinalize();
+                }
+            });
         }
     }
 

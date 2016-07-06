@@ -3,8 +3,9 @@
  * 1.0.1  : Fragmentを強制的に子まで呼び出している不具合を修正
  * 1.0.x  : Circle CIに移行
  * 1.1.x  : LifecycleStateをラップする構造に変更
+ * 1.2.x  : キャンセルチェックを複数登録できるように挙動変更
  */
-def ARTIFACT_VERSION = "1.1"
+def ARTIFACT_VERSION = "1.2"
 def ARTIFACT_NAME = file(".").absoluteFile.name
 def ARTIFACT_INSTALL_TARGET = getArtifactInstallTarget()
 
@@ -37,6 +38,7 @@ dependencies {
     compile 'io.reactivex:rxandroid:1.1.+'
     compile 'io.reactivex:rxjava:1.1.+'
     compile 'com.android.support:support-annotations:+'
+    compile "com.android.support:support-v4:24.+"
 
     if (EGLIBRARY_COMPILE_LOCAL) {
         testCompile project(":eglibrary:android-unittest-support")
@@ -54,8 +56,8 @@ dependencies {
 }
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.3"
+    compileSdkVersion 24
+    buildToolsVersion "24"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -64,7 +66,7 @@ android {
 
     defaultConfig {
         minSdkVersion 10
-        targetSdkVersion 23
+        targetSdkVersion 24
     }
 }
 

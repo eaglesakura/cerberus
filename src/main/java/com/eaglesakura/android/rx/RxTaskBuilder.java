@@ -2,8 +2,11 @@ package com.eaglesakura.android.rx;
 
 import com.eaglesakura.android.rx.error.TaskCanceledException;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.os.Looper;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 
 import java.util.concurrent.TimeUnit;
 
@@ -49,11 +52,10 @@ public class RxTaskBuilder<T> {
         mParentBuilder = parent;
         mSubscription = subscriptionController;
         mTask.mSubscription = mSubscription;
-
-        if (parent != null) {
-            // キャンセルシグナルを引き継ぐ
-            mTask.mUserCancelSignal = parent.mTask.mUserCancelSignal;
-        }
+//        if (parent != null) {
+//            // キャンセルシグナルを引き継ぐ
+//            mTask.mUserCancelSignals.add(parent.mTask.mUserCancelSignals);
+//        }
     }
 
     /**
@@ -76,8 +78,23 @@ public class RxTaskBuilder<T> {
      * ユーザのキャンセルチェックを有効化する
      */
     public RxTaskBuilder<T> cancelSignal(RxTask.Signal signal) {
-        mTask.mUserCancelSignal = signal;
+        mTask.mUserCancelSignals.add(signal);
         return this;
+    }
+
+    public RxTaskBuilder<T> cancelSignal(FragmentActivity activity) {
+        return cancelSignal(task -> activity == null || activity.isFinishing());
+    }
+
+    public RxTaskBuilder<T> cancelSignal(Fragment fragment) {
+        return cancelSignal(task -> {
+            if (fragment == null) {
+                return true;
+            }
+
+            FragmentActivity activity = fragment.getActivity();
+            return activity == null || activity.isFinishing();
+        });
     }
 
     /**
