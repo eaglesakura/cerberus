@@ -362,42 +362,44 @@ public class RxTask<T> {
 
     void setResult(T result) {
         synchronized (this) {
-            mSubscription.run(mObserveTarget, () -> {
-                mState = State.Finished;
-                mResult = result;
-
-                if (isCanceled()) {
-                    handleCanceled();
-                } else {
-                    try {
-                        handleCompleted(result);
-                        handleFinalize();
-                        // 次のタスクを実行開始する
-                        handleChain();
-                    } catch (Throwable error) {
-                        // Completed処理に失敗した
-                        mResult = null;
-                        setError(error);
-                    }
-                }
-            });
+            mState = State.Finished;
+            mResult = result;
         }
+
+        mSubscription.run(mObserveTarget, () -> {
+
+            if (isCanceled()) {
+                handleCanceled();
+            } else {
+                try {
+                    handleCompleted(result);
+                    handleFinalize();
+                    // 次のタスクを実行開始する
+                    handleChain();
+                } catch (Throwable error) {
+                    // Completed処理に失敗した
+                    mResult = null;
+                    setError(error);
+                }
+            }
+        });
     }
 
     void setError(Throwable error) {
         synchronized (this) {
-            mSubscription.run(mObserveTarget, () -> {
-                mState = State.Finished;
-                mError = error;
-
-                if (isCanceled()) {
-                    handleCanceled();
-                } else {
-                    handleFailed(error);
-                    handleFinalize();
-                }
-            });
+            mState = State.Finished;
+            mError = error;
         }
+
+        mSubscription.run(mObserveTarget, () -> {
+
+            if (isCanceled()) {
+                handleCanceled();
+            } else {
+                handleFailed(error);
+                handleFinalize();
+            }
+        });
     }
 
     /**
