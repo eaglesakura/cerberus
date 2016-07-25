@@ -43,8 +43,6 @@ class ThreadControllerImpl {
 
     /**
      * 処理対象のスケジューラを取得する
-     *
-     * MEMO : スケジューラの実際のnew処理はこの呼出まで遅延される
      */
     @Deprecated
     Scheduler getScheduler(SubscribeTarget target) {
@@ -63,7 +61,6 @@ class ThreadControllerImpl {
      *
      * MEMO : スケジューラの実際のnew処理はこの呼出まで遅延される
      */
-    @Deprecated
     Scheduler getScheduler(ExecuteTarget target) {
         if (target == ExecuteTarget.NewThread) {
             return Schedulers.newThread();
