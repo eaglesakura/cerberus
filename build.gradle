@@ -72,6 +72,10 @@ android {
         // Device Test
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"    // JUnit4
     }
+
+    lintOptions {
+        disable "NewApi"
+    }
 }
 
 /**
