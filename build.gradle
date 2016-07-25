@@ -4,8 +4,9 @@
  * 1.0.x  : Circle CIに移行
  * 1.1.x  : LifecycleStateをラップする構造に変更
  * 1.2.x  : キャンセルチェックを複数登録できるように挙動変更
+ * 2.0.x  : クラス命名をアップデート
  */
-def ARTIFACT_VERSION = "1.2"
+def ARTIFACT_VERSION = "2.0"
 def ARTIFACT_NAME = file(".").absoluteFile.name
 def ARTIFACT_INSTALL_TARGET = getArtifactInstallTarget()
 
@@ -67,6 +68,9 @@ android {
     defaultConfig {
         minSdkVersion 10
         targetSdkVersion 24
+
+        // Device Test
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"    // JUnit4
     }
 }
 

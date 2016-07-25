@@ -4,12 +4,8 @@ import com.eaglesakura.android.rx.error.RxTaskException;
 import com.eaglesakura.android.rx.error.TaskCanceledException;
 import com.eaglesakura.android.rx.error.TaskTimeoutException;
 
-import android.app.Activity;
-
 import java.util.HashSet;
 import java.util.Set;
-
-import rx.Observable;
 
 /**
  *
@@ -19,7 +15,7 @@ public class RxTask<T> {
     /**
      * コールバック管理
      */
-    SubscriptionController mSubscription;
+    StateLinkCallbackQueue mCallbackQueue;
 
     /**
      * 外部から指定されたキャンセルチェック
@@ -51,12 +47,7 @@ public class RxTask<T> {
      * <p>
      * デフォルトはFire And Forget
      */
-    ObserveTarget mObserveTarget = ObserveTarget.FireAndForget;
-
-    /**
-     * 処理本体
-     */
-    Observable<T> mObservable;
+    CallbackTime mCallbackTime = CallbackTime.FireAndForget;
 
     /**
      * 完了時処理を記述する
@@ -339,7 +330,7 @@ public class RxTask<T> {
             if (mState == RxTask.State.Finished) {
                 // タスクが終わってしまっているので、ハンドリングする
                 if (!isCanceled() && hasError()) {
-                    mSubscription.run(mObserveTarget, () -> {
+                    mCallbackQueue.run(mCallbackTime, () -> {
                         handleFailed(getError());
                     });
                 }
@@ -352,7 +343,7 @@ public class RxTask<T> {
         synchronized (this) {
             mFinalizeCallback = finalizeCallback;
             if (mState == State.Finished) {
-                mSubscription.run(mObserveTarget, () -> {
+                mCallbackQueue.run(mCallbackTime, () -> {
                     handleFinalize();
                 });
             }
@@ -366,7 +357,7 @@ public class RxTask<T> {
             mResult = result;
         }
 
-        mSubscription.run(mObserveTarget, () -> {
+        mCallbackQueue.run(mCallbackTime, () -> {
 
             if (isCanceled()) {
                 handleCanceled();
@@ -391,7 +382,7 @@ public class RxTask<T> {
             mError = error;
         }
 
-        mSubscription.run(mObserveTarget, () -> {
+        mCallbackQueue.run(mCallbackTime, () -> {
 
             if (isCanceled()) {
                 handleCanceled();

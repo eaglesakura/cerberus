@@ -2,7 +2,6 @@ package com.eaglesakura.android.rx;
 
 import com.eaglesakura.android.rx.error.TaskCanceledException;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.os.Looper;
 import android.support.v4.app.Fragment;
@@ -20,14 +19,14 @@ import rx.functions.Action1;
  *
  */
 public class RxTaskBuilder<T> {
-    final SubscriptionController mSubscription;
+    final StateLinkCallbackQueue mController;
 
     Observable<T> mObservable;
 
     /**
      * 標準ではプロセス共有スレッドで実行される
      */
-    SubscribeTarget mThreadTarget = SubscribeTarget.GlobalParallels;
+    ExecuteTarget mThreadTarget = ExecuteTarget.GlobalParallel;
 
     /**
      * Task
@@ -48,10 +47,10 @@ public class RxTaskBuilder<T> {
         this(null, subscriptionController);
     }
 
-    RxTaskBuilder(RxTaskBuilder parent, SubscriptionController subscriptionController) {
+    RxTaskBuilder(RxTaskBuilder parent, StateLinkCallbackQueue subscriptionController) {
         mParentBuilder = parent;
-        mSubscription = subscriptionController;
-        mTask.mSubscription = mSubscription;
+        mController = subscriptionController;
+        mTask.mCallbackQueue = mController;
 //        if (parent != null) {
 //            // キャンセルシグナルを引き継ぐ
 //            mTask.mUserCancelSignals.add(parent.mTask.mUserCancelSignals);
@@ -61,16 +60,35 @@ public class RxTaskBuilder<T> {
     /**
      * 処理対象のスレッドを指定する
      */
-    public RxTaskBuilder<T> subscribeOn(SubscribeTarget target) {
+    public RxTaskBuilder<T> executeOn(ExecuteTarget target) {
         mThreadTarget = target;
+        return this;
+    }
+
+
+    /**
+     * 処理対象のスレッドを指定する
+     */
+    @Deprecated
+    public RxTaskBuilder<T> subscribeOn(SubscribeTarget target) {
+        mThreadTarget = target.asExecuteTarget();
         return this;
     }
 
     /**
      * コールバック対象のタイミングを指定する
      */
+    @Deprecated
     public RxTaskBuilder<T> observeOn(ObserveTarget target) {
-        mTask.mObserveTarget = target;
+        mTask.mCallbackTime = target.asCallbackTarget();
+        return this;
+    }
+
+    /**
+     * コールバック対象のタイミングを指定する
+     */
+    public RxTaskBuilder<T> callbackOn(CallbackTime target) {
+        mTask.mCallbackTime = target;
         return this;
     }
 
@@ -209,7 +227,7 @@ public class RxTaskBuilder<T> {
                 }
             }
         })
-                .subscribeOn(mSubscription.getThreadController().getScheduler(mThreadTarget))
+                .subscribeOn(mController.getThreadController().getScheduler(mThreadTarget))
                 .observeOn(AndroidSchedulers.mainThread());
 //                .unsubscribeOn(AndroidSchedulers.mainThread());
         return this;
@@ -259,9 +277,9 @@ public class RxTaskBuilder<T> {
      * 現在構築中のタスクが正常終了した後に、連続して呼び出されるタスクを生成する。
      */
     public <R> RxTaskBuilder<R> chain(RxTask.AsyncChain<T, R> action) {
-        RxTaskBuilder<R> result = new RxTaskBuilder<R>(this, mSubscription)
-                .subscribeOn(mThreadTarget)
-                .observeOn(mTask.mObserveTarget)
+        RxTaskBuilder<R> result = new RxTaskBuilder<R>(this, mController)
+                .executeOn(mThreadTarget)
+                .callbackOn(mTask.mCallbackTime)
                 .async((RxTask<R> chainTask) -> action.call((T) mTask.getResult(), chainTask));
 
         mTask.mChainTask = result;
@@ -279,7 +297,7 @@ public class RxTaskBuilder<T> {
         // 実行準備する
         mTask.mState = RxTask.State.Pending;
         // キャンセルを購読対象と同期させる
-        mTask.mSubscribeCancelSignal = (task) -> mSubscription.isCanceled(mTask.mObserveTarget);
+        mTask.mSubscribeCancelSignal = (task) -> mController.isCanceled(mTask.mCallbackTime);
 
         if (mParentBuilder != null && !mParentBuilder.isStartedTask()) {
             // 親がいるなら、親を開始する
@@ -291,7 +309,7 @@ public class RxTaskBuilder<T> {
             }
             mStartedTask = true;
             // 開始タイミングをズラす
-            mSubscription.getHandler().post(() -> {
+            mController.getHandler().post(() -> {
                 final Subscription subscribe = mObservable.subscribe(
                         // next = completeed
                         next -> {
@@ -304,7 +322,7 @@ public class RxTaskBuilder<T> {
                 );
 
                 // 購読対象に追加
-                mSubscription.add(mTask.mObserveTarget, subscribe);
+                mController.add(mTask.mCallbackTime, subscribe);
             });
         }
         return mTask;

@@ -3,12 +3,11 @@ package com.eaglesakura.android.rx;
 /**
  * 実行スレッド選定
  */
-@Deprecated
-public enum SubscribeTarget {
+public enum ExecuteTarget {
     /**
      * 直列化されたパイプラインで制御する
      */
-    Pipeline {
+    Queue {
         @Override
         int getKeepAliveMs() {
             return 1000 * 5;
@@ -18,17 +17,12 @@ public enum SubscribeTarget {
         int getThreadPoolNum() {
             return 1;
         }
-
-        @Override
-        ExecuteTarget asExecuteTarget() {
-            return ExecuteTarget.Queue;
-        }
     },
 
     /**
      * 並列化されたスレッドプールで制御する
      */
-    Parallels {
+    Parallel {
         @Override
         int getKeepAliveMs() {
             return 1000 * 5;
@@ -38,17 +32,12 @@ public enum SubscribeTarget {
         int getThreadPoolNum() {
             return 3;
         }
-
-        @Override
-        ExecuteTarget asExecuteTarget() {
-            return ExecuteTarget.Parallel;
-        }
     },
 
     /**
      * プロセス内で共有される直列化された処理
      */
-    GlobalPipeline {
+    GlobalQueue {
         @Override
         int getKeepAliveMs() {
             return 1000 * 3;
@@ -58,17 +47,12 @@ public enum SubscribeTarget {
         int getThreadPoolNum() {
             return 1;
         }
-
-        @Override
-        ExecuteTarget asExecuteTarget() {
-            return ExecuteTarget.GlobalQueue;
-        }
     },
 
     /**
      * プロセス内で共有される並列化された処理
      */
-    GlobalParallels {
+    GlobalParallel {
         @Override
         int getKeepAliveMs() {
             return 1000 * 3;
@@ -77,11 +61,6 @@ public enum SubscribeTarget {
         @Override
         int getThreadPoolNum() {
             return 5;
-        }
-
-        @Override
-        ExecuteTarget asExecuteTarget() {
-            return ExecuteTarget.GlobalParallel;
         }
     },
 
@@ -100,12 +79,6 @@ public enum SubscribeTarget {
         int getThreadPoolNum() {
             return 3;
         }
-
-
-        @Override
-        ExecuteTarget asExecuteTarget() {
-            return ExecuteTarget.Network;
-        }
     },
 
     /**
@@ -120,11 +93,6 @@ public enum SubscribeTarget {
         @Override
         int getThreadPoolNum() {
             return 0;
-        }
-
-        @Override
-        ExecuteTarget asExecuteTarget() {
-            return ExecuteTarget.NewThread;
         }
     },
 
@@ -141,11 +109,6 @@ public enum SubscribeTarget {
         int getThreadPoolNum() {
             return 0;
         }
-
-        @Override
-        ExecuteTarget asExecuteTarget() {
-            return ExecuteTarget.MainThread;
-        }
     };
 
     /**
@@ -157,7 +120,4 @@ public enum SubscribeTarget {
      * 最大スレッド数を取得する
      */
     abstract int getThreadPoolNum();
-
-    @Deprecated
-    abstract ExecuteTarget asExecuteTarget();
 }

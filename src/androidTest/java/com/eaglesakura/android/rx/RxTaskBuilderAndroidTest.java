@@ -1,6 +1,6 @@
 package com.eaglesakura.android.rx;
 
-import com.eaglesakura.android.devicetest.ModuleTestCase;
+import com.eaglesakura.android.devicetest.DeviceTestCase;
 import com.eaglesakura.android.rx.error.TaskCanceledException;
 import com.eaglesakura.android.rx.event.LifecycleEventImpl;
 import com.eaglesakura.android.thread.ui.UIHandler;
@@ -9,9 +9,17 @@ import com.eaglesakura.thread.Holder;
 import com.eaglesakura.util.LogUtil;
 import com.eaglesakura.util.Util;
 
+import org.junit.Test;
+
 import rx.subjects.BehaviorSubject;
 
-public class RxTaskBuilderAndroidTest extends ModuleTestCase {
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+public class RxTaskBuilderAndroidTest extends DeviceTestCase {
 
     class LifecycleItem {
         BehaviorSubject<LifecycleEvent> mSubject = BehaviorSubject.create(new LifecycleEventImpl(LifecycleState.NewObject));
@@ -47,7 +55,8 @@ public class RxTaskBuilderAndroidTest extends ModuleTestCase {
         }
     }
 
-    public void test_タスクのメモリリークがないことを確認する() throws Throwable {
+    @Test
+    public void タスクのメモリリークがないことを確認する() throws Throwable {
         AndroidThreadUtil.assertBackgroundThread();
         assertTrue(isTestingThread());
 
@@ -83,7 +92,8 @@ public class RxTaskBuilderAndroidTest extends ModuleTestCase {
         }
     }
 
-    public void test_タスクチェインが実行されて最後の値が取得できる() throws Throwable {
+    @Test
+    public void タスクチェインが実行されて最後の値が取得できる() throws Throwable {
         AndroidThreadUtil.assertBackgroundThread();
         assertTrue(isTestingThread());
 
@@ -118,7 +128,8 @@ public class RxTaskBuilderAndroidTest extends ModuleTestCase {
         assertEquals(rxTask.await(1000 * 5), Integer.valueOf(3103));
     }
 
-    public void test_タスクが同期実行できる() throws Throwable {
+    @Test
+    public void タスクが同期実行できる() throws Throwable {
         AndroidThreadUtil.assertBackgroundThread();
         assertTrue(isTestingThread());
 
@@ -148,7 +159,8 @@ public class RxTaskBuilderAndroidTest extends ModuleTestCase {
         assertEquals(rxTask.await(1000 * 5), Boolean.TRUE);
     }
 
-    public void test_ライフサイクル状態によってコールバックが保留される() throws Throwable {
+    @Test
+    public void ライフサイクル状態によってコールバックが保留される() throws Throwable {
         AndroidThreadUtil.assertBackgroundThread();
         assertTrue(isTestingThread());
 
@@ -190,7 +202,8 @@ public class RxTaskBuilderAndroidTest extends ModuleTestCase {
         }
     }
 
-    public void test_ライフサイクル状態によってタスクがキャンセルされる() throws Throwable {
+    @Test
+    public void ライフサイクル状態によってタスクがキャンセルされる() throws Throwable {
         AndroidThreadUtil.assertBackgroundThread();
         assertTrue(isTestingThread());
 

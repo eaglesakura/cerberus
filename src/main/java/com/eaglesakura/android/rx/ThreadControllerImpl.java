@@ -13,7 +13,7 @@ import rx.schedulers.Schedulers;
 /**
  * RxAndroidの実行スレッド制御を行う
  */
-class ThreadController {
+class ThreadControllerImpl {
 
     List<ThreadItem> mThreads = new ArrayList<>();
 
@@ -21,24 +21,24 @@ class ThreadController {
     /**
      * プロセス共有シリアル
      */
-    private final ThreadItem gGlobalPipeline = new ThreadItem(SubscribeTarget.GlobalPipeline);
+    private final ThreadItem sGlobalPipeline = new ThreadItem(ExecuteTarget.GlobalQueue);
 
     /**
      * プロセス共有Parallels
      */
-    private final ThreadItem gGlobalParallels = new ThreadItem(SubscribeTarget.GlobalParallels);
+    private final ThreadItem sGlobalParallels = new ThreadItem(ExecuteTarget.GlobalParallel);
 
     /**
      * プロセス共有ネットワーク
      */
-    private final ThreadItem gNetworks = new ThreadItem(SubscribeTarget.Network);
+    private final ThreadItem sNetworks = new ThreadItem(ExecuteTarget.Network);
 
-    public ThreadController() {
-        mThreads.add(new ThreadItem(SubscribeTarget.Pipeline));
-        mThreads.add(new ThreadItem(SubscribeTarget.Parallels));
-        mThreads.add(gGlobalPipeline);
-        mThreads.add(gGlobalParallels);
-        mThreads.add(gNetworks);
+    public ThreadControllerImpl() {
+        mThreads.add(new ThreadItem(ExecuteTarget.Queue));
+        mThreads.add(new ThreadItem(ExecuteTarget.Parallel));
+        mThreads.add(sGlobalPipeline);
+        mThreads.add(sGlobalParallels);
+        mThreads.add(sNetworks);
     }
 
     /**
@@ -46,10 +46,28 @@ class ThreadController {
      *
      * MEMO : スケジューラの実際のnew処理はこの呼出まで遅延される
      */
-    public Scheduler getScheduler(SubscribeTarget target) {
+    @Deprecated
+    Scheduler getScheduler(SubscribeTarget target) {
         if (target == SubscribeTarget.NewThread) {
             return Schedulers.newThread();
         } else if (target == SubscribeTarget.MainThread) {
+            return AndroidSchedulers.mainThread();
+        } else {
+            return mThreads.get(target.ordinal()).getScheduler();
+        }
+    }
+
+
+    /**
+     * 処理対象のスケジューラを取得する
+     *
+     * MEMO : スケジューラの実際のnew処理はこの呼出まで遅延される
+     */
+    @Deprecated
+    Scheduler getScheduler(ExecuteTarget target) {
+        if (target == ExecuteTarget.NewThread) {
+            return Schedulers.newThread();
+        } else if (target == ExecuteTarget.MainThread) {
             return AndroidSchedulers.mainThread();
         } else {
             return mThreads.get(target.ordinal()).getScheduler();
@@ -67,9 +85,9 @@ class ThreadController {
     class ThreadItem {
         ThreadPoolExecutor mExecutor;
         Scheduler mScheduler;
-        SubscribeTarget mTarget;
+        ExecuteTarget mTarget;
 
-        public ThreadItem(SubscribeTarget target) {
+        public ThreadItem(ExecuteTarget target) {
             this.mTarget = target;
         }
 
