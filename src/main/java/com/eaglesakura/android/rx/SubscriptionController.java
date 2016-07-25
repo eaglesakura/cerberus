@@ -6,10 +6,10 @@ package com.eaglesakura.android.rx;
  * <p>
  * Fragment等と関連付けられ、そのライフサイクルを離れると自動的にコールバックを呼びださなくする。
  *
- * @see StateLinkCallbackQueue
+ * @see PendingCallbackQueue
  */
 @Deprecated
-public class SubscriptionController extends StateLinkCallbackQueue {
+public class SubscriptionController extends PendingCallbackQueue {
     public SubscriptionController() {
     }
 }

@@ -21,7 +21,7 @@ public enum SubscribeTarget {
 
         @Override
         ExecuteTarget asExecuteTarget() {
-            return ExecuteTarget.Queue;
+            return ExecuteTarget.LocalQueue;
         }
     },
 
@@ -41,7 +41,7 @@ public enum SubscribeTarget {
 
         @Override
         ExecuteTarget asExecuteTarget() {
-            return ExecuteTarget.Parallel;
+            return ExecuteTarget.LocalParallel;
         }
     },
 

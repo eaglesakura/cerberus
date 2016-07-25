@@ -34,8 +34,8 @@ class ThreadControllerImpl {
     private final ThreadItem sNetworks = new ThreadItem(ExecuteTarget.Network);
 
     public ThreadControllerImpl() {
-        mThreads.add(new ThreadItem(ExecuteTarget.Queue));
-        mThreads.add(new ThreadItem(ExecuteTarget.Parallel));
+        mThreads.add(new ThreadItem(ExecuteTarget.LocalQueue));
+        mThreads.add(new ThreadItem(ExecuteTarget.LocalParallel));
         mThreads.add(sGlobalPipeline);
         mThreads.add(sGlobalParallels);
         mThreads.add(sNetworks);

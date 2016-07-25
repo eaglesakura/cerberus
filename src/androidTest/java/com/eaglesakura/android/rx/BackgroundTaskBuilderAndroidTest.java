@@ -19,14 +19,14 @@ import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class RxTaskBuilderAndroidTest extends DeviceTestCase {
+public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
     class LifecycleItem {
         BehaviorSubject<LifecycleEvent> mSubject = BehaviorSubject.create(new LifecycleEventImpl(LifecycleState.NewObject));
-        SubscriptionController mSubscriptionController = new SubscriptionController();
+        PendingCallbackQueue mCallbackQueue = new PendingCallbackQueue();
 
         public LifecycleItem() {
-            mSubscriptionController.bind(mSubject);
+            mCallbackQueue.bind(mSubject);
             next(LifecycleState.OnCreated);
             next(LifecycleState.OnStarted);
         }
@@ -49,7 +49,7 @@ public class RxTaskBuilderAndroidTest extends DeviceTestCase {
                 mSubject.onNext(new LifecycleEventImpl(state));
             });
 
-            while (state != mSubscriptionController.getState()) {
+            while (state != mCallbackQueue.getState()) {
                 Util.sleep(10);
             }
         }
@@ -66,7 +66,7 @@ public class RxTaskBuilderAndroidTest extends DeviceTestCase {
 
             for (int i = 0; i < 128; ++i) {
                 for (int k = 0; k < 128; ++k) {
-                    BackgroundTask rxTask = new RxTaskBuilder<byte[]>(item.mSubscriptionController)
+                    BackgroundTask rxTask = new BackgroundTaskBuilder<byte[]>(item.mCallbackQueue)
                             .async(new BackgroundTask.Async<byte[]>() {
                                 byte[] buffer;
 
@@ -76,8 +76,8 @@ public class RxTaskBuilderAndroidTest extends DeviceTestCase {
                                     return buffer;
                                 }
                             })
-                            .observeOn(ObserveTarget.FireAndForget)
-                            .subscribeOn(SubscribeTarget.Pipeline)
+                            .executeOn(ExecuteTarget.LocalQueue)
+                            .callbackOn(CallbackTime.FireAndForget)
                             .start();
 
                     byte[] buffer = (byte[]) rxTask.await();
@@ -102,7 +102,7 @@ public class RxTaskBuilderAndroidTest extends DeviceTestCase {
         try {
             item.onResume();
 
-            rxTask = new RxTaskBuilder<Boolean>(item.mSubscriptionController)
+            rxTask = new BackgroundTaskBuilder<Boolean>(item.mCallbackQueue)
                     .async(task -> {
                         LogUtil.log("Call Async!");
 
@@ -110,8 +110,8 @@ public class RxTaskBuilderAndroidTest extends DeviceTestCase {
                         task.waitTime(100);
                         return true;
                     })
-                    .observeOn(ObserveTarget.FireAndForget)
-                    .subscribeOn(SubscribeTarget.Pipeline)
+                    .callbackOn(CallbackTime.FireAndForget)
+                    .executeOn(ExecuteTarget.LocalQueue)
                     .chain((ret, task) -> {
                         LogUtil.log("Call Chain!!");
                         assertFalse(isTestingThread());
@@ -138,7 +138,7 @@ public class RxTaskBuilderAndroidTest extends DeviceTestCase {
         try {
             item.onResume();
 
-            rxTask = new RxTaskBuilder<Boolean>(item.mSubscriptionController)
+            rxTask = new BackgroundTaskBuilder<Boolean>(item.mCallbackQueue)
                     .async(task -> {
                         LogUtil.log("Call Async!");
 
@@ -147,8 +147,8 @@ public class RxTaskBuilderAndroidTest extends DeviceTestCase {
                         task.waitTime(100);
                         return true;
                     })
-                    .observeOn(ObserveTarget.FireAndForget)
-                    .subscribeOn(SubscribeTarget.Pipeline)
+                    .callbackOn(CallbackTime.FireAndForget)
+                    .executeOn(ExecuteTarget.LocalQueue)
                     .start();
 
         } finally {
@@ -171,7 +171,7 @@ public class RxTaskBuilderAndroidTest extends DeviceTestCase {
         try {
             item.onResume();
 
-            rxTask = new RxTaskBuilder<Boolean>(item.mSubscriptionController)
+            rxTask = new BackgroundTaskBuilder<Boolean>(item.mCallbackQueue)
                     .async(task -> {
                         LogUtil.log("Call Async!");
 
@@ -180,8 +180,8 @@ public class RxTaskBuilderAndroidTest extends DeviceTestCase {
                         task.waitTime(100);
                         return true;
                     })
-                    .observeOn(ObserveTarget.Foreground)
-                    .subscribeOn(SubscribeTarget.Pipeline)
+                    .callbackOn(CallbackTime.Foreground)
+                    .executeOn(ExecuteTarget.LocalQueue)
                     .completed((it, task) -> {
                         callbackCheck.set(Boolean.TRUE);
                     }).start();
@@ -214,7 +214,7 @@ public class RxTaskBuilderAndroidTest extends DeviceTestCase {
         try {
             item.onResume();
 
-            rxTask = new RxTaskBuilder<Boolean>(item.mSubscriptionController)
+            rxTask = new BackgroundTaskBuilder<>(item.mCallbackQueue)
                     .async(task -> {
                         LogUtil.log("Call Async!");
 
@@ -223,8 +223,8 @@ public class RxTaskBuilderAndroidTest extends DeviceTestCase {
                         task.waitTime(500);
                         return true;
                     })
-                    .observeOn(ObserveTarget.CurrentForeground)
-                    .subscribeOn(SubscribeTarget.Pipeline)
+                    .callbackOn(CallbackTime.CurrentForeground)
+                    .executeOn(ExecuteTarget.LocalQueue)
                     .completed((it, task) -> {
                         callbackCheck.set(Boolean.TRUE);
                     }).start();

@@ -8,14 +8,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * 非同期実行されるタスクを管理する
  *
+ * タスクは StateLinkQueue によってコールバック管理され、必要に応じてコールバックの保留やキャンセルが行われる。
  */
-public class RxTask<T> {
+public class BackgroundTask<T> {
 
     /**
      * コールバック管理
      */
-    StateLinkCallbackQueue mCallbackQueue;
+    PendingCallbackQueue mCallbackQueue;
 
     /**
      * 外部から指定されたキャンセルチェック
@@ -52,27 +54,27 @@ public class RxTask<T> {
     /**
      * 完了時処理を記述する
      */
-    RxTask.Action1<T> mCompletedCallback;
+    BackgroundTask.Action1<T> mCompletedCallback;
 
     /**
      * キャンセル時の処理を記述する
      */
-    RxTask.Action0<T> mCancelCallback;
+    BackgroundTask.Action0<T> mCancelCallback;
 
     /**
      * エラー時の処理を記述する
      */
-    RxTask.ErrorAction<T> mErrorCallback;
+    BackgroundTask.ErrorAction<T> mErrorCallback;
 
     /**
      * 最終的に必ず呼び出される処理
      */
-    RxTask.Action0 mFinalizeCallback;
+    BackgroundTask.Action0 mFinalizeCallback;
 
     /**
      * チェーン実行されるタスク
      */
-    RxTaskBuilder mChainTask;
+    BackgroundTaskBuilder mChainTask;
 
     /**
      * タスク名
@@ -106,7 +108,7 @@ public class RxTask<T> {
         Finished,
     }
 
-    RxTask() {
+    BackgroundTask() {
     }
 
     /**
@@ -299,11 +301,11 @@ public class RxTask<T> {
     }
 
 
-    public RxTask<T> completed(Action1<T> completedCallback) {
+    public BackgroundTask<T> completed(Action1<T> completedCallback) {
         synchronized (this) {
             mCompletedCallback = completedCallback;
 
-            if (mState == RxTask.State.Finished) {
+            if (mState == BackgroundTask.State.Finished) {
                 // タスクが終わってしまっているので、ハンドリングも行う
                 if (!isCanceled() && !hasError()) {
                     handleCompleted(getResult());
@@ -314,20 +316,20 @@ public class RxTask<T> {
         }
     }
 
-    public RxTask<T> canceled(Action0<T> cancelCallback) {
+    public BackgroundTask<T> canceled(Action0<T> cancelCallback) {
         synchronized (this) {
             mCancelCallback = cancelCallback;
-            if (mState == RxTask.State.Finished && isCanceled()) {
+            if (mState == BackgroundTask.State.Finished && isCanceled()) {
                 handleCanceled();
             }
             return this;
         }
     }
 
-    public RxTask<T> failed(ErrorAction<T> errorCallback) {
+    public BackgroundTask<T> failed(ErrorAction<T> errorCallback) {
         synchronized (this) {
             mErrorCallback = errorCallback;
-            if (mState == RxTask.State.Finished) {
+            if (mState == BackgroundTask.State.Finished) {
                 // タスクが終わってしまっているので、ハンドリングする
                 if (!isCanceled() && hasError()) {
                     mCallbackQueue.run(mCallbackTime, () -> {
@@ -339,7 +341,7 @@ public class RxTask<T> {
         }
     }
 
-    public RxTask<T> finalized(Action0 finalizeCallback) {
+    public BackgroundTask<T> finalized(Action0 finalizeCallback) {
         synchronized (this) {
             mFinalizeCallback = finalizeCallback;
             if (mState == State.Finished) {
@@ -397,28 +399,28 @@ public class RxTask<T> {
      * 非同期処理を記述する
      */
     public interface Async<T> {
-        T call(RxTask<T> task) throws Throwable;
+        T call(BackgroundTask<T> task) throws Throwable;
     }
 
     /**
      * 非同期連続処理を記述する
      */
     public interface AsyncChain<T, R> {
-        R call(T before, RxTask<R> task) throws Throwable;
+        R call(T before, BackgroundTask<R> task) throws Throwable;
     }
 
     /**
      * コールバックを記述する
      */
     public interface Action0<T> {
-        void call(RxTask<T> task);
+        void call(BackgroundTask<T> task);
     }
 
     /**
      * 非同期処理後のコールバックを記述する
      */
     public interface Action1<T> {
-        void call(T it, RxTask<T> task);
+        void call(T it, BackgroundTask<T> task);
     }
 
 
@@ -426,14 +428,14 @@ public class RxTask<T> {
      * 非同期処理後のコールバックを記述する
      */
     public interface ErrorAction<T> {
-        void call(Throwable it, RxTask<T> task);
+        void call(Throwable it, BackgroundTask<T> task);
     }
 
     /**
      * 非同期処理後のコールバックを記述する
      */
     public interface ErrorReturn<T> {
-        T call(Throwable it, RxTask<T> task);
+        T call(Throwable it, BackgroundTask<T> task);
     }
 
     /**
@@ -445,7 +447,7 @@ public class RxTask<T> {
         /**
          * キャンセルする場合はtrueを返す
          */
-        boolean is(RxTask<T> task);
+        boolean is(BackgroundTask<T> task);
     }
 
 
@@ -453,6 +455,6 @@ public class RxTask<T> {
      * リトライチェック用
      */
     public interface RetrySignal<T> {
-        boolean is(RxTask<T> task, int count, Throwable error);
+        boolean is(BackgroundTask<T> task, int count, Throwable error);
     }
 }

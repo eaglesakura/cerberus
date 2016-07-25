@@ -21,7 +21,7 @@ import rx.subscriptions.CompositeSubscription;
  * <p>
  * Fragment等と関連付けられ、そのライフサイクルを離れると自動的にコールバックを呼びださなくする。
  */
-public class StateLinkCallbackQueue {
+public class PendingCallbackQueue {
     /**
      * 通常処理されるSubscription
      */
@@ -46,7 +46,7 @@ public class StateLinkCallbackQueue {
 
     private Observable<LifecycleEvent> mObservable;
 
-    public StateLinkCallbackQueue() {
+    public PendingCallbackQueue() {
         for (CallbackTime obs : CallbackTime.values()) {
             mStateControllers.add(new StateController(obs));
         }
@@ -63,7 +63,7 @@ public class StateLinkCallbackQueue {
      * ユニットテスト用のハンドラを構築する
      */
     @Deprecated
-    public StateLinkCallbackQueue startUnitTest() {
+    public PendingCallbackQueue startUnitTest() {
         HandlerThread handlerThread = new HandlerThread("UnitTestCallback");
         handlerThread.start();
         mHandler = new Handler(handlerThread.getLooper());
@@ -104,7 +104,7 @@ public class StateLinkCallbackQueue {
     /**
      * ライフサイクルをバインドする
      */
-    public StateLinkCallbackQueue bind(BehaviorSubject<LifecycleEvent> behavior) {
+    public PendingCallbackQueue bind(BehaviorSubject<LifecycleEvent> behavior) {
         mObservable = behavior.asObservable();
         mObservable.subscribe(next -> {
             // 継承されたActivityやFragmentはsuper.onの呼び出しで前後が生じるため、統一させるために必ずワンテンポ処理を遅らせる
@@ -125,7 +125,7 @@ public class StateLinkCallbackQueue {
         return this;
     }
 
-    StateLinkCallbackQueue add(CallbackTime time, Subscription s) {
+    PendingCallbackQueue add(CallbackTime time, Subscription s) {
         if (time != CallbackTime.FireAndForget) {
             mSubscription.add(s);
         }
@@ -154,11 +154,11 @@ public class StateLinkCallbackQueue {
     /**
      * UnitTest用の空のコントローラを生成する
      */
-    public static StateLinkCallbackQueue newUnitTestController() {
+    public static PendingCallbackQueue newUnitTestController() {
         BehaviorSubject<LifecycleEvent> behavior = BehaviorSubject.create(new LifecycleEventImpl(LifecycleState.NewObject));
         behavior.onNext(new LifecycleEventImpl(LifecycleState.OnResumed));
 
-        StateLinkCallbackQueue controller = new StateLinkCallbackQueue();
+        PendingCallbackQueue controller = new PendingCallbackQueue();
         controller.bind(behavior);
         return controller;
     }

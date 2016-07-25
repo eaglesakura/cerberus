@@ -7,7 +7,7 @@ public enum ExecuteTarget {
     /**
      * 直列化されたパイプラインで制御する
      */
-    Queue {
+    LocalQueue {
         @Override
         int getKeepAliveMs() {
             return 1000 * 5;
@@ -22,7 +22,7 @@ public enum ExecuteTarget {
     /**
      * 並列化されたスレッドプールで制御する
      */
-    Parallel {
+    LocalParallel {
         @Override
         int getKeepAliveMs() {
             return 1000 * 5;
