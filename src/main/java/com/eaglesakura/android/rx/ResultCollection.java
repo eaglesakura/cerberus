@@ -40,18 +40,25 @@ public class ResultCollection {
 
     /**
      * 自動で結果を検索して返す。
-     * キャストが成功した場合のみ返却する。
      * これはputされている値がすべて違う型である場合のみ正しく動作する。
      */
-    public <T> T get() {
+    public <T> T as(Class<T> clazz) {
         synchronized (mObjects) {
             for (Object value : mObjects.values()) {
+                if (value == null) {
+                    continue;
+                }
+
+
                 try {
-                    return (T) value;
+                    if (value.getClass().asSubclass(clazz) != null) {
+                        return (T) value;
+                    }
                 } catch (ClassCastException e) {
 
                 }
             }
+
             throw new Error();
         }
     }
