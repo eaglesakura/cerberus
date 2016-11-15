@@ -68,6 +68,7 @@ android {
     defaultConfig {
         minSdkVersion 10
         targetSdkVersion 25
+        consumerProguardFiles 'proguard-rules.pro'
 
         // Device Test
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"    // JUnit4
