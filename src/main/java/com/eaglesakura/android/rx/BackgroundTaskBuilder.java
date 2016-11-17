@@ -95,7 +95,7 @@ public class BackgroundTaskBuilder<T> {
      * ユーザのキャンセルチェックを有効化する
      */
     public BackgroundTaskBuilder<T> cancelSignal(BackgroundTask.Signal signal) {
-        mTask.mUserCancelSignals.add(signal);
+        mTask.mCancelSignals.add(signal);
         return this;
     }
 
@@ -302,7 +302,8 @@ public class BackgroundTaskBuilder<T> {
         // 実行準備する
         mTask.mState = BackgroundTask.State.Pending;
         // キャンセルを購読対象と同期させる
-        mTask.mSubscribeCancelSignal = (task) -> mController.isCanceled(mTask.mCallbackTime);
+        PendingCallbackQueue.State dumpState = mController.getCurrentState().dump();
+        cancelSignal(task -> mController.isCanceled(mTask.mCallbackTime, dumpState));
 
         if (mParentBuilder != null && !mParentBuilder.isStartedTask()) {
             // 親がいるなら、親を開始する
@@ -314,7 +315,7 @@ public class BackgroundTaskBuilder<T> {
             }
             mStartedTask = true;
             // 開始タイミングをズラす
-            mController.getHandler().post(() -> {
+            mController.getsHandler().post(() -> {
                 mTask.mSubscription = mObservable.subscribe(
                         // next = completeed
                         next -> {
