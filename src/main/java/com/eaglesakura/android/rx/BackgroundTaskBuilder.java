@@ -270,8 +270,6 @@ public class BackgroundTaskBuilder<T> {
         // 実行準備する
         mTask.mState = BackgroundTask.State.Pending;
         // キャンセルを購読対象と同期させる
-        PendingCallbackQueue.State dumpState = mController.getCurrentState().dump();
-        cancelSignal(task -> mController.isCanceled(mTask.mCallbackTime, dumpState));
 
         if (mParentBuilder != null && !mParentBuilder.isStartedTask()) {
             // 親がいるなら、親を開始する
@@ -283,7 +281,10 @@ public class BackgroundTaskBuilder<T> {
             }
             mStartedTask = true;
             // 開始タイミングをズラす
-            mController.getsHandler().post(() -> {
+            mController.sHandler.post(() -> {
+                PendingCallbackQueue.State dumpState = mController.getCurrentState().dump();
+                BackgroundTask.Signal signal = task -> mController.isCanceled(mTask.mCallbackTime, dumpState);
+                mTask.mCancelSignals.add(signal);
                 mTask.mSubscription = mObservable.subscribe(
                         // next = completeed
                         next -> {

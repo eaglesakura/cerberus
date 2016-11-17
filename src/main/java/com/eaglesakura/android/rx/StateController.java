@@ -89,6 +89,7 @@ public abstract class StateController {
 
     /**
      * 現在の前面処理のみコールバックを受け付ける。
+     * 現在Backgroundにある場合、タスクは実行されずにキャンセルされる
      *
      * onPauseのタイミングで、保留されているキューは全て廃棄される。
      */

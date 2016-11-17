@@ -76,10 +76,6 @@ public class PendingCallbackQueue {
         return mThreadController;
     }
 
-    public Handler getsHandler() {
-        return sHandler;
-    }
-
     public Observable<LifecycleEvent> getObservable() {
         return mObservable;
     }

@@ -25,6 +25,10 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
             next(LifecycleState.OnStarted);
         }
 
+        public void onCreate() {
+            next(LifecycleState.OnCreated);
+        }
+
         public void onResume() {
             next(LifecycleState.OnResumed);
         }
