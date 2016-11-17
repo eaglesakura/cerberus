@@ -64,25 +64,6 @@ public class BackgroundTaskBuilder<T> {
         return this;
     }
 
-
-    /**
-     * 処理対象のスレッドを指定する
-     */
-    @Deprecated
-    public BackgroundTaskBuilder<T> subscribeOn(SubscribeTarget target) {
-        mThreadTarget = target.asExecuteTarget();
-        return this;
-    }
-
-    /**
-     * コールバック対象のタイミングを指定する
-     */
-    @Deprecated
-    public BackgroundTaskBuilder<T> observeOn(ObserveTarget target) {
-        mTask.mCallbackTime = target.asCallbackTarget();
-        return this;
-    }
-
     /**
      * コールバック対象のタイミングを指定する
      */
@@ -276,19 +257,6 @@ public class BackgroundTaskBuilder<T> {
     public BackgroundTaskBuilder<T> finalized(BackgroundTask.Action0<T> callback) {
         mTask.finalized(callback);
         return this;
-    }
-
-    /**
-     * 現在構築中のタスクが正常終了した後に、連続して呼び出されるタスクを生成する。
-     */
-    public <R> BackgroundTaskBuilder<R> chain(BackgroundTask.AsyncChain<T, R> action) {
-        BackgroundTaskBuilder<R> result = new BackgroundTaskBuilder<R>(this, mController)
-                .executeOn(mThreadTarget)
-                .callbackOn(mTask.mCallbackTime)
-                .async((BackgroundTask<R> chainTask) -> action.call((T) mTask.getResult(), chainTask));
-
-        mTask.mChainTask = result;
-        return result;
     }
 
     public boolean isStartedTask() {

@@ -141,16 +141,6 @@ public class PendingCallbackQueue {
      * <p>
      * 実行保留中であれば一旦キューに貯め、resumeのタイミングでキューを全て実行させる。
      */
-    @Deprecated
-    public void run(ObserveTarget target, Runnable callback) {
-        run(target.asCallbackTarget(), callback);
-    }
-
-    /**
-     * 実行クラスを渡し、処理を行わせる。
-     * <p>
-     * 実行保留中であれば一旦キューに貯め、resumeのタイミングでキューを全て実行させる。
-     */
     public void run(CallbackTime target, Runnable callback) {
         getController(target).run(this, new PendingTask(callback, mState.dump()));
     }
@@ -193,35 +183,6 @@ public class PendingCallbackQueue {
     public void runWithWait(CallbackTime time, Runnable callback, long timeoutMs) throws TimeoutException {
         Object lock = new Object();
         run(time, () -> {
-            try {
-                callback.run();
-            } finally {
-                synchronized (lock) {
-                    lock.notifyAll();
-                }
-            }
-        });
-        synchronized (lock) {
-            try {
-                lock.wait(timeoutMs);
-            } catch (Exception e) {
-            }
-        }
-    }
-
-    /**
-     * 実行クラスを渡し、実行待ちを行う。
-     *
-     * デッドロック等の事情によりタイムアウトやフリーズの原因になるので、実行には注意すること。
-     *
-     * @param target    実行条件
-     * @param callback  実行内容
-     * @param timeoutMs 待ち時間
-     */
-    @Deprecated
-    public void runWithWait(ObserveTarget target, Runnable callback, long timeoutMs) throws TimeoutException {
-        Object lock = new Object();
-        run(target, () -> {
             try {
                 callback.run();
             } finally {

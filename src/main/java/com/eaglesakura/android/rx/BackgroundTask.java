@@ -405,13 +405,6 @@ public class BackgroundTask<T> {
     }
 
     /**
-     * 非同期連続処理を記述する
-     */
-    public interface AsyncChain<T, R> {
-        R call(T before, BackgroundTask<R> task) throws Throwable;
-    }
-
-    /**
      * コールバックを記述する
      */
     public interface Action0<T> {
