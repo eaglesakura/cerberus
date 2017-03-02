@@ -98,7 +98,7 @@ tasks.withType(Test) {
 
 // check env
 if (!hasProperty("ANDROID_SUPPORT_LIB_VERSION")) {
-    ext.ANDROID_SUPPORT_LIB_VERSION = "25.+"
+    ext.ANDROID_SUPPORT_LIB_VERSION = "25.2.+"
 }
 
 apply plugin: 'maven'
@@ -173,13 +173,13 @@ uploadArchives {
             dependency {
                 groupId 'io.reactivex'
                 artifactId = 'rxandroid'
-                version = dependenceisVersion("io.reactivex:rxandroid", "1.1.+")
+                version = dependenciesVersion("io.reactivex:rxandroid", "1.1.+")
                 scope = 'compile'
             }
             dependency {
                 groupId 'io.reactivex'
                 artifactId = 'rxjava'
-                version = dependenceisVersion("io.reactivex:rxjava", "1.1.+")
+                version = dependenciesVersion("io.reactivex:rxjava", "1.1.+")
                 scope = 'compile'
             }
         }
@@ -198,7 +198,7 @@ task uploadJavadoc << {
 /**
  * 依存している固定ライブラリバージョンを取得する
  */
-String dependenceisVersion(String libName, String defVersion) {
+String dependenciesVersion(String libName, String defVersion) {
     def lines = [];
     def target = file("dependencies.txt");
     if (!target.file) {
