@@ -3,7 +3,7 @@ package com.eaglesakura.android.rx;
 import com.eaglesakura.android.devicetest.DeviceTestCase;
 import com.eaglesakura.android.rx.error.TaskCanceledException;
 import com.eaglesakura.android.rx.event.LifecycleEventImpl;
-import com.eaglesakura.android.thread.ui.UIHandler;
+import com.eaglesakura.android.thread.UIHandler;
 import com.eaglesakura.android.util.AndroidThreadUtil;
 import com.eaglesakura.thread.Holder;
 import com.eaglesakura.util.LogUtil;
