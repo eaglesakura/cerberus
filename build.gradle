@@ -6,20 +6,27 @@
  * 1.2.x  : キャンセルチェックを複数登録できるように挙動変更
  * 2.0.x  : クラス命名をアップデート
  * 2.1.x  : CallbackQueueの現在のステートを取得できるように修正, Chain Taskを削除
+ * 2.2.x  : bintray対応
  */
-def ARTIFACT_VERSION = "2.1"
-def ARTIFACT_NAME = file(".").absoluteFile.name
-def ARTIFACT_INSTALL_TARGET = getArtifactInstallTarget()
+def ARTIFACT_VERSION = "2.2"
+def REPOSITORY_NAME = "maven"
+def BINTRAY_LICENSES = ["MIT"]
+def BINTRAY_LABELS = ["android"]
+def BINTRAY_API_KEY = System.env.BINTRAY_API_KEY
+def BINTRAY_GPG_PASS = System.env.BINTRAY_GPG_PASS
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     repositories {
         maven { url "http://eaglesakura.github.io/maven/" }
         jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.3.0'
         classpath 'me.tatarka:gradle-retrolambda:3.5.0' // support Lambda
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
     }
 }
 
@@ -30,6 +37,8 @@ repositories {
 
 apply plugin: 'com.android.library'
 apply plugin: 'me.tatarka.retrolambda' /* Android Lambda Support */
+group = "com.eaglesakura"
+version = ARTIFACT_VERSION + getArtifactVersionSuffix()
 
 // Local or maven
 if (!hasProperty("EGLIBRARY_COMPILE_LOCAL")) {
@@ -96,8 +105,6 @@ tasks.withType(Test) {
     }
 }
 
-apply plugin: 'maven'
-
 task sourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
     classifier = 'sources'
@@ -143,90 +150,6 @@ android.libraryVariants.all { variant ->
     }
 }
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            repository(url: uri(ARTIFACT_INSTALL_TARGET))
-            pom.version = ARTIFACT_VERSION + getArtifactVersionSuffix()
-            pom.groupId = "com.eaglesakura"
-            pom.artifactId = ARTIFACT_NAME
-        }
-    }
-}
-
-[uploadArchives.repositories.mavenDeployer]*.pom*.whenConfigured { pom ->
-    pom.project {
-        inceptionYear '2016'
-        packaging 'aar'
-        licenses {
-            license {
-                name 'MIT License'
-                url 'https://raw.githubusercontent.com/eaglesakura/onactivityresult-invoke/master/LICENSE.txt'
-            }
-        }
-        dependencies {
-            dependency {
-                groupId 'io.reactivex'
-                artifactId = 'rxandroid'
-                version = dependenciesVersion("io.reactivex:rxandroid", "1.1.+")
-                scope = 'compile'
-            }
-            dependency {
-                groupId 'io.reactivex'
-                artifactId = 'rxjava'
-                version = dependenciesVersion("io.reactivex:rxjava", "1.1.+")
-                scope = 'compile'
-            }
-        }
-    }
-}
-
-task uploadJavadoc << {
-    def src = file("build/docs/javadoc/");
-    def dst = new File("${ARTIFACT_INSTALL_TARGET.absolutePath}/doc/${ARTIFACT_NAME}/");
-    dst.deleteDir();
-    dst.mkdirs();
-
-    ["/usr/bin/rsync", "-a", src.absolutePath, dst.absolutePath].execute().text;
-}
-
-/**
- * 依存している固定ライブラリバージョンを取得する
- */
-String dependenciesVersion(String libName, String defVersion) {
-    def lines = [];
-    def target = file("dependencies.txt");
-    if (!target.file) {
-        return defVersion;
-    }
-
-    target.text.eachLine {
-        if (!it.contains(libName) || it.contains("(")) {
-            return;
-        }
-
-        def tokens = it.split(" ");
-        if (tokens == null || tokens.length == 0) {
-            return;
-        }
-
-        // バージョン固定されている場合は"lib:name:1.0.0"とフルで取得できてしまうので、分割して再度最後を取得する
-        def version = tokens[tokens.length - 1];
-        if (version.startsWith(libName)) {
-            def splitVersions = version.split(":");
-            version = splitVersions[splitVersions.length - 1];
-        }
-        lines += version;
-    }
-    if (lines.empty) {
-        println("${libName} -> ${defVersion}")
-        return defVersion;
-    } else {
-        println("${libName} -> ${lines[0]}")
-        return lines[0];
-    }
-}
-
 /**
  * バージョンを取得する
  * CircleCIの場合、バージョン末尾にビルド番号を付与する
@@ -236,21 +159,31 @@ def getArtifactVersionSuffix() {
         // CircleCIのバージョンが指定されているので、そちらを利用する
         return ".${System.env.CIRCLE_BUILD_NUM}"
     } else {
-        return ".local"
+        return ".snapshot"
     }
 }
 
-/**
- * Mavenの格納先を確定する
- */
-def getArtifactInstallTarget() {
-    if (file("maven").directory) {
-        return file("maven");
-    } else if (System.env.CIRCLE_ARTIFACTS != null) {
-        return file(System.env.CIRCLE_ARTIFACTS);
-    } else if (System.env.MAVEN_LOCAL_REPO != null) {
-        return file(System.env.MAVEN_LOCAL_REPO);
-    } else {
-        return file("ci-release");
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.github.dcendents.android-maven'
+
+bintray {
+    user = 'eaglesakura'
+    key = BINTRAY_API_KEY
+    pkg {
+        repo = REPOSITORY_NAME
+        name = file(".").absoluteFile.name
+        licenses = BINTRAY_LICENSES
+        labels = BINTRAY_LABELS
+        issueTrackerUrl = "https://github.com/eaglesakura/${file(".").absoluteFile.name}/issues"
+        vcsUrl = "https://github.com/eaglesakura/${file(".").absoluteFile.name}"
+        version {
+            name = project.version
+            released = new Date()
+            gpg {
+                sign = true
+                passphrase = BINTRAY_GPG_PASS
+            }
+        }
     }
+    configurations = ['archives']
 }
