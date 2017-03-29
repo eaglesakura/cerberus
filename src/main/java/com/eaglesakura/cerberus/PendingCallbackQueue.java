@@ -1,8 +1,8 @@
-package com.eaglesakura.android.rx;
+package com.eaglesakura.cerberus;
 
 
-import com.eaglesakura.android.rx.error.TaskCanceledException;
-import com.eaglesakura.android.rx.event.LifecycleEventImpl;
+import com.eaglesakura.cerberus.error.TaskCanceledException;
+import com.eaglesakura.cerberus.event.LifecycleEventImpl;
 
 import android.os.Handler;
 import android.os.Looper;

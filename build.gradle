@@ -1,14 +1,7 @@
 /**
- * 1.0.0  : release
- * 1.0.1  : Fragmentを強制的に子まで呼び出している不具合を修正
- * 1.0.x  : Circle CIに移行
- * 1.1.x  : LifecycleStateをラップする構造に変更
- * 1.2.x  : キャンセルチェックを複数登録できるように挙動変更
- * 2.0.x  : クラス命名をアップデート
- * 2.1.x  : CallbackQueueの現在のステートを取得できるように修正, Chain Taskを削除
- * 2.2.x  : bintray対応
+ * 2.3.x  : `cerberus`にライブラリ名を変更
  */
-def ARTIFACT_VERSION = "2.2"
+def ARTIFACT_VERSION = "2.3"
 def REPOSITORY_NAME = "maven"
 def BINTRAY_LICENSES = ["MIT"]
 def BINTRAY_LABELS = ["android"]

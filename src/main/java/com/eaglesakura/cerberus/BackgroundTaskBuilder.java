@@ -1,6 +1,6 @@
-package com.eaglesakura.android.rx;
+package com.eaglesakura.cerberus;
 
-import com.eaglesakura.android.rx.error.TaskCanceledException;
+import com.eaglesakura.cerberus.error.TaskCanceledException;
 
 import android.app.Dialog;
 import android.os.Looper;

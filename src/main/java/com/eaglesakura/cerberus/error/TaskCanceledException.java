@@ -1,6 +1,6 @@
-package com.eaglesakura.android.rx.error;
+package com.eaglesakura.cerberus.error;
 
-public class TaskCanceledException extends RxTaskException {
+public class TaskCanceledException extends TaskException {
     public TaskCanceledException() {
     }
 

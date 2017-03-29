@@ -1,4 +1,4 @@
-package com.eaglesakura.android.rx;
+package com.eaglesakura.cerberus;
 
 import android.support.annotation.NonNull;
 

@@ -1,4 +1,4 @@
-package com.eaglesakura.android.rx;
+package com.eaglesakura.cerberus;
 
 /**
  * 非同期処理のコールバック待ちを行う場所

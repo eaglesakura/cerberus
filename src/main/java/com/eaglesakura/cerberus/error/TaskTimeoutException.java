@@ -1,6 +1,6 @@
-package com.eaglesakura.android.rx.error;
+package com.eaglesakura.cerberus.error;
 
-public class TaskTimeoutException extends RxTaskException {
+public class TaskTimeoutException extends TaskException {
     public TaskTimeoutException() {
     }
 

@@ -1,4 +1,4 @@
-package com.eaglesakura.android.rx;
+package com.eaglesakura.cerberus;
 
 import java.util.ArrayList;
 import java.util.List;

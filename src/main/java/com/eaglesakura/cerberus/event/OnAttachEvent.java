@@ -1,7 +1,7 @@
-package com.eaglesakura.android.rx.event;
+package com.eaglesakura.cerberus.event;
 
-import com.eaglesakura.android.rx.LifecycleEvent;
-import com.eaglesakura.android.rx.LifecycleState;
+import com.eaglesakura.cerberus.LifecycleEvent;
+import com.eaglesakura.cerberus.LifecycleState;
 
 import android.content.Context;
 import android.support.annotation.NonNull;

@@ -1,8 +1,15 @@
-package com.eaglesakura.android.rx;
+package com.eaglesakura.cerberus;
 
 import com.eaglesakura.android.devicetest.DeviceTestCase;
-import com.eaglesakura.android.rx.error.TaskCanceledException;
-import com.eaglesakura.android.rx.event.LifecycleEventImpl;
+import com.eaglesakura.cerberus.BackgroundTask;
+import com.eaglesakura.cerberus.BackgroundTaskBuilder;
+import com.eaglesakura.cerberus.CallbackTime;
+import com.eaglesakura.cerberus.ExecuteTarget;
+import com.eaglesakura.cerberus.LifecycleEvent;
+import com.eaglesakura.cerberus.LifecycleState;
+import com.eaglesakura.cerberus.PendingCallbackQueue;
+import com.eaglesakura.cerberus.error.TaskCanceledException;
+import com.eaglesakura.cerberus.event.LifecycleEventImpl;
 import com.eaglesakura.android.thread.UIHandler;
 import com.eaglesakura.android.util.AndroidThreadUtil;
 import com.eaglesakura.thread.Holder;

@@ -1,8 +1,8 @@
-package com.eaglesakura.android.rx;
+package com.eaglesakura.cerberus;
 
-import com.eaglesakura.android.rx.error.RxTaskException;
-import com.eaglesakura.android.rx.error.TaskCanceledException;
-import com.eaglesakura.android.rx.error.TaskTimeoutException;
+import com.eaglesakura.cerberus.error.TaskException;
+import com.eaglesakura.cerberus.error.TaskCanceledException;
+import com.eaglesakura.cerberus.error.TaskTimeoutException;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -132,7 +132,7 @@ public class BackgroundTask<T> {
      * <p>
      * 途中でキャンセルされた場合は例外を投げて終了される
      */
-    public void waitTime(long timeMs) throws RxTaskException {
+    public void waitTime(long timeMs) throws TaskException {
         if (timeMs <= 0) {
             return;
         }

@@ -1,4 +1,4 @@
-package com.eaglesakura.android.rx;
+package com.eaglesakura.cerberus;
 
 /**
  * 実行スレッド選定
