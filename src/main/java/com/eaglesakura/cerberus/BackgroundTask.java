@@ -4,6 +4,7 @@ import com.eaglesakura.cerberus.error.TaskException;
 import com.eaglesakura.cerberus.error.TaskCanceledException;
 import com.eaglesakura.cerberus.error.TaskTimeoutException;
 
+import java.io.InterruptedIOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -233,11 +234,21 @@ public class BackgroundTask<T> {
         }
     }
 
+    private boolean hasCanceledError() {
+        if (mError == null) {
+            return false;
+        }
+
+        return (mError instanceof TaskCanceledException)
+                || (mError instanceof InterruptedException)
+                || (mError instanceof InterruptedIOException);
+    }
+
     /**
      * タスクがキャンセル状態であればtrue
      */
     public boolean isCanceled() {
-        if (mError != null && (mError instanceof TaskCanceledException)) {
+        if (hasCanceledError()) {
             return true;
         }
 
