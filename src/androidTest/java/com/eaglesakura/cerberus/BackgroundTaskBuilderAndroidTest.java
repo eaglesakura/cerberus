@@ -1,26 +1,22 @@
 package com.eaglesakura.cerberus;
 
 import com.eaglesakura.android.devicetest.DeviceTestCase;
-import com.eaglesakura.cerberus.BackgroundTask;
-import com.eaglesakura.cerberus.BackgroundTaskBuilder;
-import com.eaglesakura.cerberus.CallbackTime;
-import com.eaglesakura.cerberus.ExecuteTarget;
-import com.eaglesakura.cerberus.LifecycleEvent;
-import com.eaglesakura.cerberus.LifecycleState;
-import com.eaglesakura.cerberus.PendingCallbackQueue;
-import com.eaglesakura.cerberus.error.TaskCanceledException;
-import com.eaglesakura.cerberus.event.LifecycleEventImpl;
 import com.eaglesakura.android.thread.UIHandler;
 import com.eaglesakura.android.util.AndroidThreadUtil;
+import com.eaglesakura.cerberus.error.TaskCanceledException;
+import com.eaglesakura.cerberus.event.LifecycleEventImpl;
 import com.eaglesakura.thread.Holder;
-import com.eaglesakura.util.LogUtil;
 import com.eaglesakura.util.Util;
 
 import org.junit.Test;
 
+import android.util.Log;
+
 import rx.subjects.BehaviorSubject;
 
 public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
+
+    static final String TAG = BackgroundTaskBuilderAndroidTest.class.getSimpleName();
 
     class LifecycleItem {
         BehaviorSubject<LifecycleEvent> mSubject = BehaviorSubject.create(new LifecycleEventImpl(LifecycleState.NewObject));
@@ -109,7 +105,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
             rxTask = new BackgroundTaskBuilder<Boolean>(item.mCallbackQueue)
                     .async(task -> {
-                        LogUtil.log("Call Async!");
+                        Log.d(TAG, "Call Async!");
 
                         assertFalse(isTestingThread()); // バックグラウンドで実行されている
 
@@ -142,7 +138,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
             rxTask = new BackgroundTaskBuilder<Boolean>(item.mCallbackQueue)
                     .async(task -> {
-                        LogUtil.log("Call Async!");
+                        Log.d(TAG, "Call Async!");
 
                         assertFalse(isTestingThread()); // バックグラウンドで実行されている
 
@@ -185,7 +181,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
             rxTask = new BackgroundTaskBuilder<>(item.mCallbackQueue)
                     .async(task -> {
-                        LogUtil.log("Call Async!");
+                        Log.d(TAG, "Call Async!");
 
                         assertFalse(isTestingThread()); // バックグラウンドで実行されている
 
@@ -224,7 +220,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
             rxTask = new BackgroundTaskBuilder<>(item.mCallbackQueue)
                     .async(task -> {
-                        LogUtil.log("Call Async!");
+                        Log.d(TAG, "Call Async!");
 
                         assertFalse(isTestingThread()); // バックグラウンドで実行されている
 
@@ -246,7 +242,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
                 fail(); // アプリがバックグラウンドにあるため、task.waitTimeによってキャンセル例外で死んでいるはずである
             } catch (TaskCanceledException e) {
-                LogUtil.log("Task Canceled");
+                Log.d(TAG, "Task Canceled");
             }
             assertEquals(callbackCheck.get(), Boolean.FALSE);     // コールバックは捨てられるので、呼びだされてはならない。
         } finally {
@@ -267,7 +263,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
             rxTask = new BackgroundTaskBuilder<>(item.mCallbackQueue)
                     .async(task -> {
-                        LogUtil.log("Call Async!");
+                        Log.d(TAG, "Call Async!");
 
                         assertFalse(isTestingThread()); // バックグラウンドで実行されている
 
@@ -306,7 +302,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
             rxTask = new BackgroundTaskBuilder<>(item.mCallbackQueue)
                     .async(task -> {
-                        LogUtil.log("Call Async!");
+                        Log.d(TAG, "Call Async!");
 
                         assertFalse(isTestingThread()); // バックグラウンドで実行されている
 
@@ -344,7 +340,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
             rxTask = new BackgroundTaskBuilder<>(item.mCallbackQueue)
                     .async(task -> {
-                        LogUtil.log("Call Async!");
+                        Log.d(TAG, "Call Async!");
 
                         assertFalse(isTestingThread()); // バックグラウンドで実行されている
 
@@ -392,7 +388,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
             rxTask = new BackgroundTaskBuilder<>(item.mCallbackQueue)
                     .async(task -> {
-                        LogUtil.log("Call Async!");
+                        Log.d(TAG, "Call Async!");
 
                         assertFalse(isTestingThread()); // バックグラウンドで実行されている
 
@@ -415,7 +411,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
                 fail(); // アプリがバックグラウンドにあるため、task.waitTimeによってキャンセル例外で死んでいるはずである
             } catch (TaskCanceledException e) {
-                LogUtil.log("Task Canceled");
+                Log.d(TAG, "Task Canceled");
             }
             assertEquals(callbackCheck.get(), Boolean.FALSE);     // コールバックは捨てられるので、呼びだされてはならない。
         } finally {
@@ -436,7 +432,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
             rxTask = new BackgroundTaskBuilder<>(item.mCallbackQueue)
                     .async(task -> {
-                        LogUtil.log("Call Async!");
+                        Log.d(TAG, "Call Async!");
 
                         assertFalse(isTestingThread()); // バックグラウンドで実行されている
 
@@ -474,7 +470,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
             rxTask = new BackgroundTaskBuilder<>(item.mCallbackQueue)
                     .async(task -> {
-                        LogUtil.log("Call Async!");
+                        Log.d(TAG, "Call Async!");
 
                         assertFalse(isTestingThread()); // バックグラウンドで実行されている
 
@@ -500,7 +496,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
                 fail(); // アプリがバックグラウンドにあるため、task.waitTimeによってキャンセル例外で死んでいるはずである
             } catch (TaskCanceledException e) {
-                LogUtil.log("Task Canceled");
+                Log.d(TAG, "Task Canceled");
             }
 
             item.onResume();    // アプリがフォアグラウンドに復帰した
