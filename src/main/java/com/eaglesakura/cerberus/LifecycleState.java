@@ -9,59 +9,17 @@ public enum LifecycleState {
      * Newされたばかり
      */
     NewObject,
-
-    /**
-     * OnCreateViewが完了した
-     */
     OnAttach,
-
-    /**
-     * OnCreateViewが完了した
-     */
-    OnViewCreated,
-
-    /**
-     * OnCreateが完了した
-     */
-    OnCreated,
-
-    /**
-     * OnStartが完了した
-     */
-    OnStarted,
-
-    /**
-     * インスタンス状態の保存を行う
-     */
+    OnCreateView,
+    OnCreate,
+    OnActivityResult,
+    OnStart,
     OnRestoreInstanceState,
-
-    /**
-     * OnResumeが完了した
-     */
-    OnResumed,
-
-    /**
-     * インスタンス状態の保存を行う
-     */
+    OnResume,
+    OnCreateOptionsMenu,
     OnSaveInstanceState,
-
-    /**
-     * OnPauseが完了した
-     */
-    OnPaused,
-
-    /**
-     * OnStopが完了した
-     */
-    OnStopped,
-
-    /**
-     * OnDestroyが完了した
-     */
-    OnViewDestroyed,
-
-    /**
-     * OnDestroyが完了した
-     */
-    OnDestroyed,
+    OnPause,
+    OnStop,
+    OnDestroyView,
+    OnDestroy,
 }

@@ -9,7 +9,7 @@ import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
-public class OnViewCreateEvent implements LifecycleEvent {
+public class OnCreateViewEvent implements LifecycleEvent {
     @NonNull
     final LayoutInflater inflater;
 
@@ -19,7 +19,7 @@ public class OnViewCreateEvent implements LifecycleEvent {
     @Nullable
     final Bundle savedInstanceState;
 
-    public OnViewCreateEvent(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public OnCreateViewEvent(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         this.inflater = inflater;
         this.container = container;
         this.savedInstanceState = savedInstanceState;
@@ -27,7 +27,7 @@ public class OnViewCreateEvent implements LifecycleEvent {
 
     @Override
     public LifecycleState getState() {
-        return LifecycleState.OnViewCreated;
+        return LifecycleState.OnCreateView;
     }
 
     @NonNull

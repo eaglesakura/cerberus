@@ -24,25 +24,25 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
         public LifecycleItem() {
             mCallbackQueue.bind(mSubject);
-            next(LifecycleState.OnCreated);
-            next(LifecycleState.OnStarted);
+            next(LifecycleState.OnCreate);
+            next(LifecycleState.OnStart);
         }
 
         public void onCreate() {
-            next(LifecycleState.OnCreated);
+            next(LifecycleState.OnCreate);
         }
 
         public void onResume() {
-            next(LifecycleState.OnResumed);
+            next(LifecycleState.OnResume);
         }
 
         public void onPause() {
-            next(LifecycleState.OnPaused);
+            next(LifecycleState.OnPause);
         }
 
         public void onDestroy() {
-            next(LifecycleState.OnStopped);
-            next(LifecycleState.OnDestroyed);
+            next(LifecycleState.OnStop);
+            next(LifecycleState.OnDestroy);
         }
 
         void next(LifecycleState state) {

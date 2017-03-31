@@ -16,7 +16,7 @@ public class OnCreateEvent implements LifecycleEvent {
 
     @Override
     public LifecycleState getState() {
-        return LifecycleState.OnCreated;
+        return LifecycleState.OnCreate;
     }
 
     @Nullable

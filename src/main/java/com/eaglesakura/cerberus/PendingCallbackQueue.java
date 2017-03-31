@@ -94,7 +94,7 @@ public class PendingCallbackQueue {
             sHandler.post(() -> {
                 mState = mState.nextState(next.getState());
 
-                if (mState.getState() == LifecycleState.OnDestroyed) {
+                if (mState.getState() == LifecycleState.OnDestroy) {
                     mThreadController.dispose();
                     mSubscription.unsubscribe();
                 }
@@ -146,7 +146,7 @@ public class PendingCallbackQueue {
      */
     public static PendingCallbackQueue newUnitTestController() {
         BehaviorSubject<LifecycleEvent> behavior = BehaviorSubject.create(new LifecycleEventImpl(LifecycleState.NewObject));
-        behavior.onNext(new LifecycleEventImpl(LifecycleState.OnResumed));
+        behavior.onNext(new LifecycleEventImpl(LifecycleState.OnResume));
 
         PendingCallbackQueue controller = new PendingCallbackQueue();
         controller.bind(behavior);
@@ -281,21 +281,21 @@ public class PendingCallbackQueue {
          * オブジェクトが作成状態であればtrue
          */
         public boolean isCreated() {
-            return mState.ordinal() >= LifecycleState.OnCreated.ordinal();
+            return mState.ordinal() >= LifecycleState.OnCreate.ordinal();
         }
 
         /**
          * Foreground状態であればtrue
          */
         public boolean isForeground() {
-            return mState == LifecycleState.OnResumed;
+            return mState == LifecycleState.OnResume;
         }
 
         /**
          * オブジェクトが廃棄状態であればtrue
          */
         public boolean isDestroyed() {
-            return mState.ordinal() >= LifecycleState.OnDestroyed.ordinal();
+            return mState.ordinal() >= LifecycleState.OnDestroy.ordinal();
         }
 
         public synchronized State nextState(LifecycleState nextLifecycle) {

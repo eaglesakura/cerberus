@@ -6,11 +6,11 @@ import com.eaglesakura.cerberus.LifecycleState;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 
-public class OnSaveEvent implements LifecycleEvent {
+public class OnSaveInstanceStateEvent implements LifecycleEvent {
     @NonNull
     final Bundle mBundle;
 
-    public OnSaveEvent(Bundle bundle) {
+    public OnSaveInstanceStateEvent(Bundle bundle) {
         mBundle = bundle;
     }
 
