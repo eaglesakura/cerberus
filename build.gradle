@@ -52,7 +52,7 @@ dependencies {
     } else {
         testCompile "com.eaglesakura:android-unittest-support:1.5.211"
 
-        androidTestCompile "com.eaglesakura:android-commons:2.1.3"
+        androidTestCompile "com.eaglesakura:android-commons:2.2.11"
         androidTestCompile "com.eaglesakura:android-devicetest-support:2.2.275"
     }
 }
