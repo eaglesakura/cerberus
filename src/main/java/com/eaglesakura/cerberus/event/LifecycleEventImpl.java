@@ -5,6 +5,7 @@ import com.eaglesakura.cerberus.LifecycleState;
 
 import android.support.annotation.NonNull;
 
+@Deprecated
 public class LifecycleEventImpl implements LifecycleEvent {
     @NonNull
     final LifecycleState mState;

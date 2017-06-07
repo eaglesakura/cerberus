@@ -10,6 +10,7 @@ import java.util.List;
 /**
  * 複数タスクをグループ制御する
  */
+@Deprecated
 public class ParallelTaskGroup<T> {
 
     @NonNull

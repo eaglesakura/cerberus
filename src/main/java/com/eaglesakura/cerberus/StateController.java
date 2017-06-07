@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * ステート管理
  */
-public abstract class StateController {
+abstract class StateController {
 
     List<PendingCallbackQueue.PendingTask> mPendingActions = new ArrayList<>();
 

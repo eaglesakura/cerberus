@@ -19,7 +19,7 @@ buildscript {
         maven { url "https://dl.bintray.com/eaglesakura/maven/" }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.0-alpha1'
+        classpath 'com.android.tools.build:gradle:3.0.0-alpha3'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
     }
@@ -43,8 +43,8 @@ if (!hasProperty("EGLIBRARY_COMPILE_LOCAL")) {
 dependencies {
     compile 'io.reactivex:rxandroid:1.1.0'
     compile 'io.reactivex:rxjava:1.1.10'
-    compile "com.android.support:support-annotations:25.3.1"
-    compile "com.android.support:support-v4:25.3.1"
+    implementation "com.android.support:support-annotations:25.3.1"
+    implementation "com.android.support:support-v4:25.3.1"
 
     if (EGLIBRARY_COMPILE_LOCAL) {
         testImplementation project(":eglibrary:android-unittest-support")
@@ -52,10 +52,10 @@ dependencies {
         androidTestImplementation project(":eglibrary:android-commons")
         androidTestImplementation project(":eglibrary:android-devicetest-support")
     } else {
-        testCompile "com.eaglesakura:android-unittest-support:1.5.211"
+        testImplementation "com.eaglesakura:android-unittest-support:1.5.211"
 
-        androidTestCompile "com.eaglesakura:android-commons:2.3.0"
-        androidTestCompile "com.eaglesakura:android-devicetest-support:2.2.275"
+        androidTestImplementation "com.eaglesakura:android-commons:2.3.0"
+        androidTestImplementation "com.eaglesakura:android-devicetest-support:2.2.275"
     }
 }
 

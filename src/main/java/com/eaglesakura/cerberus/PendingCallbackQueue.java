@@ -2,7 +2,6 @@ package com.eaglesakura.cerberus;
 
 
 import com.eaglesakura.cerberus.error.TaskCanceledException;
-import com.eaglesakura.cerberus.event.LifecycleEventImpl;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -145,8 +144,8 @@ public class PendingCallbackQueue {
      * UnitTest用の空のコントローラを生成する
      */
     public static PendingCallbackQueue newUnitTestController() {
-        BehaviorSubject<LifecycleEvent> behavior = BehaviorSubject.create(new LifecycleEventImpl(LifecycleState.NewObject));
-        behavior.onNext(new LifecycleEventImpl(LifecycleState.OnResume));
+        BehaviorSubject<LifecycleEvent> behavior = BehaviorSubject.create(LifecycleEvent.wrap(LifecycleState.NewObject));
+        behavior.onNext(LifecycleEvent.wrap(LifecycleState.OnResume));
 
         PendingCallbackQueue controller = new PendingCallbackQueue();
         controller.bind(behavior);
@@ -159,7 +158,7 @@ public class PendingCallbackQueue {
      * 状態はNewObjectとなる
      */
     public static PendingCallbackQueue newInstance() {
-        BehaviorSubject<LifecycleEvent> behavior = BehaviorSubject.create(new LifecycleEventImpl(LifecycleState.NewObject));
+        BehaviorSubject<LifecycleEvent> behavior = BehaviorSubject.create(LifecycleEvent.wrap(LifecycleState.NewObject));
 
         PendingCallbackQueue controller = new PendingCallbackQueue();
         controller.bind(behavior);

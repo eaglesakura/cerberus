@@ -5,4 +5,8 @@ package com.eaglesakura.cerberus;
  */
 public interface LifecycleEvent {
     LifecycleState getState();
+
+    static LifecycleEvent wrap(LifecycleState state) {
+        return () -> state;
+    }
 }

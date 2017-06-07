@@ -4,7 +4,6 @@ import com.eaglesakura.android.devicetest.DeviceTestCase;
 import com.eaglesakura.android.thread.UIHandler;
 import com.eaglesakura.android.util.AndroidThreadUtil;
 import com.eaglesakura.cerberus.error.TaskCanceledException;
-import com.eaglesakura.cerberus.event.LifecycleEventImpl;
 import com.eaglesakura.thread.Holder;
 import com.eaglesakura.util.Util;
 
@@ -19,7 +18,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
     static final String TAG = BackgroundTaskBuilderAndroidTest.class.getSimpleName();
 
     class LifecycleItem {
-        BehaviorSubject<LifecycleEvent> mSubject = BehaviorSubject.create(new LifecycleEventImpl(LifecycleState.NewObject));
+        BehaviorSubject<LifecycleEvent> mSubject = BehaviorSubject.create(LifecycleEvent.wrap(LifecycleState.NewObject));
         PendingCallbackQueue mCallbackQueue = new PendingCallbackQueue();
 
         public LifecycleItem() {
@@ -47,7 +46,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
         void next(LifecycleState state) {
             UIHandler.postUI(() -> {
-                mSubject.onNext(new LifecycleEventImpl(state));
+                mSubject.onNext(LifecycleEvent.wrap(state));
             });
 
             while (state != mCallbackQueue.getState()) {
