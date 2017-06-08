@@ -3,6 +3,8 @@ package com.eaglesakura.cerberus;
 
 import com.eaglesakura.cerberus.error.TaskCanceledException;
 
+import org.reactivestreams.Subscription;
+
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -11,11 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-import rx.Observable;
-import rx.Subscription;
-import rx.functions.Action1;
-import rx.subjects.BehaviorSubject;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.internal.subscriptions.ArrayCompositeSubscription;
+import io.reactivex.subjects.BehaviorSubject;
 
 /**
  * 実行対象のスレッドと、コールバック対象のスレッドをそれぞれ管理する。
@@ -33,7 +37,7 @@ public class PendingCallbackQueue {
     /**
      * 通常処理されるSubscription
      */
-    private CompositeSubscription mSubscription = new CompositeSubscription();
+    private CompositeDisposable mSubscription = new CompositeDisposable();
 
     /**
      * 各Observeステートごとの保留タスク管理
@@ -79,7 +83,7 @@ public class PendingCallbackQueue {
         return mObservable;
     }
 
-    public Subscription subscribe(Action1<? super LifecycleEvent> onNext) {
+    public Disposable subscribe(Consumer<? super LifecycleEvent> onNext) {
         return mObservable.subscribe(onNext);
     }
 
@@ -87,7 +91,7 @@ public class PendingCallbackQueue {
      * ライフサイクルをバインドする
      */
     public PendingCallbackQueue bind(BehaviorSubject<LifecycleEvent> behavior) {
-        mObservable = behavior.asObservable();
+        mObservable = behavior.subscribeOn(AndroidSchedulers.mainThread());
         mObservable.subscribe(next -> {
             // 継承されたActivityやFragmentはsuper.onの呼び出しで前後が生じるため、統一させるために必ずワンテンポ処理を遅らせる
             sHandler.post(() -> {
@@ -95,7 +99,7 @@ public class PendingCallbackQueue {
 
                 if (mState.getState() == LifecycleState.OnDestroy) {
                     mThreadController.dispose();
-                    mSubscription.unsubscribe();
+                    mSubscription.dispose();
                 }
 
                 // 保留タスクがあれば流すように促す
@@ -107,14 +111,14 @@ public class PendingCallbackQueue {
         return this;
     }
 
-    PendingCallbackQueue add(CallbackTime time, Subscription s) {
+    PendingCallbackQueue add(CallbackTime time, Disposable s) {
         if (time != CallbackTime.FireAndForget) {
             mSubscription.add(s);
         }
         return this;
     }
 
-    PendingCallbackQueue remove(Subscription s) {
+    PendingCallbackQueue remove(Disposable s) {
         mSubscription.remove(s);
         return this;
     }
@@ -144,7 +148,7 @@ public class PendingCallbackQueue {
      * UnitTest用の空のコントローラを生成する
      */
     public static PendingCallbackQueue newUnitTestController() {
-        BehaviorSubject<LifecycleEvent> behavior = BehaviorSubject.create(LifecycleEvent.wrap(LifecycleState.NewObject));
+        BehaviorSubject<LifecycleEvent> behavior = BehaviorSubject.createDefault(LifecycleEvent.wrap(LifecycleState.NewObject));
         behavior.onNext(LifecycleEvent.wrap(LifecycleState.OnResume));
 
         PendingCallbackQueue controller = new PendingCallbackQueue();
@@ -158,7 +162,7 @@ public class PendingCallbackQueue {
      * 状態はNewObjectとなる
      */
     public static PendingCallbackQueue newInstance() {
-        BehaviorSubject<LifecycleEvent> behavior = BehaviorSubject.create(LifecycleEvent.wrap(LifecycleState.NewObject));
+        BehaviorSubject<LifecycleEvent> behavior = BehaviorSubject.createDefault(LifecycleEvent.wrap(LifecycleState.NewObject));
 
         PendingCallbackQueue controller = new PendingCallbackQueue();
         controller.bind(behavior);

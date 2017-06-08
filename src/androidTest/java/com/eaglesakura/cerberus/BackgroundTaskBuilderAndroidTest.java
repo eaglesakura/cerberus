@@ -11,14 +11,14 @@ import org.junit.Test;
 
 import android.util.Log;
 
-import rx.subjects.BehaviorSubject;
+import io.reactivex.subjects.BehaviorSubject;
 
 public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
     static final String TAG = BackgroundTaskBuilderAndroidTest.class.getSimpleName();
 
     class LifecycleItem {
-        BehaviorSubject<LifecycleEvent> mSubject = BehaviorSubject.create(LifecycleEvent.wrap(LifecycleState.NewObject));
+        BehaviorSubject<LifecycleEvent> mSubject = BehaviorSubject.createDefault(LifecycleEvent.wrap(LifecycleState.NewObject));
         PendingCallbackQueue mCallbackQueue = new PendingCallbackQueue();
 
         public LifecycleItem() {

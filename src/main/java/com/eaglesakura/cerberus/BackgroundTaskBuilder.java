@@ -2,6 +2,8 @@ package com.eaglesakura.cerberus;
 
 import com.eaglesakura.cerberus.error.TaskCanceledException;
 
+import org.reactivestreams.Subscriber;
+
 import android.app.Dialog;
 import android.os.Looper;
 import android.support.v4.app.Fragment;
@@ -9,10 +11,10 @@ import android.support.v4.app.FragmentActivity;
 
 import java.util.concurrent.TimeUnit;
 
-import rx.Observable;
-import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
 
 /**
  *
@@ -188,7 +190,7 @@ public class BackgroundTaskBuilder<T> {
      * 非同期処理を指定する
      */
     public BackgroundTaskBuilder<T> async(BackgroundTask.Async<T> subscribe) {
-        mObservable = Observable.create((Subscriber<? super T> it) -> {
+        mObservable = Observable.create((ObservableEmitter<T> it) -> {
             synchronized (mTask) {
                 mTask.mState = BackgroundTask.State.Running;
                 bindThreadName();
@@ -210,20 +212,12 @@ public class BackgroundTaskBuilder<T> {
             // 実行完了をコールする
             synchronized (mTask) {
                 it.onNext(result);
-                it.onCompleted();
+                it.onComplete();
             }
         })
                 .subscribeOn(mController.getThreadController().getScheduler(mThreadTarget))
                 .observeOn(AndroidSchedulers.mainThread());
 //                .unsubscribeOn(AndroidSchedulers.mainThread());
-        return this;
-    }
-
-    /**
-     * Observableを直接更新する
-     */
-    public BackgroundTaskBuilder<T> update(final Action1<Observable<T>> callback) {
-        callback.call(mObservable);
         return this;
     }
 
@@ -288,14 +282,14 @@ public class BackgroundTaskBuilder<T> {
                 mTask.mSubscription = mObservable.subscribe(
                         // next = completeed
                         next -> {
-                            mTask.mSubscription.unsubscribe();
+                            mTask.mSubscription.dispose();
                             mController.remove(mTask.mSubscription);
                             mTask.mSubscription = null;
                             mTask.setResult(next);
                         },
                         // error
                         error -> {
-                            mTask.mSubscription.unsubscribe();
+                            mTask.mSubscription.dispose();
                             mController.remove(mTask.mSubscription);
                             mTask.mSubscription = null;
                             mTask.setError(error);

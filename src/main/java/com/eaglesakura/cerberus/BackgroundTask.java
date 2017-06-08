@@ -8,7 +8,8 @@ import java.io.InterruptedIOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import rx.Subscription;
+import io.reactivex.disposables.Disposable;
+
 
 /**
  * 非同期実行されるタスクを管理する
@@ -45,7 +46,7 @@ public class BackgroundTask<T> {
     /**
      * 購読データ
      */
-    Subscription mSubscription;
+    Disposable mSubscription;
 
     /**
      * コールバック対象を指定する
