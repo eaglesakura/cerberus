@@ -399,7 +399,6 @@ public class BackgroundTask<T> {
         }
 
         mCallbackQueue.run(mCallbackTime, () -> {
-
             if (isCanceled()) {
                 handleCanceled();
             } else {

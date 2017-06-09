@@ -120,33 +120,6 @@ public class PendingCallbackQueue {
     }
 
     /**
-     * UnitTest用の空のコントローラを生成する
-     */
-    public static PendingCallbackQueue newUnitTestController() {
-//        BehaviorSubject<LifecycleEvent> behavior = BehaviorSubject.createDefault(LifecycleEvent.wrap(LifecycleState.NewObject));
-//        behavior.onNext(LifecycleEvent.wrap(LifecycleState.OnResume));
-//
-//        PendingCallbackQueue controller = new PendingCallbackQueue();
-//        controller.bind(behavior);
-//        return controller;
-        throw new Error("Not Impl");
-    }
-
-    /**
-     * デフォルト構成で生成する
-     *
-     * 状態はNewObjectとなる
-     */
-    public static PendingCallbackQueue newInstance() {
-//        BehaviorSubject<LifecycleEvent> behavior = BehaviorSubject.createDefault(LifecycleEvent.wrap(LifecycleState.NewObject));
-//
-//        PendingCallbackQueue controller = new PendingCallbackQueue();
-//        controller.bind(behavior);
-//        return controller;
-        throw new Error("Not Impl");
-    }
-
-    /**
      * 実行クラスを渡し、実行待ちを行う。
      *
      * デッドロック等の事情によりタイムアウトやフリーズの原因になるので、実行には注意すること。

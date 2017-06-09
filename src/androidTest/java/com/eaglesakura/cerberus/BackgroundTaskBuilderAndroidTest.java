@@ -214,7 +214,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
     }
 
     @Test
-    public void ライフサイクル状態によってタスクがキャンセルさる_Alive() throws Throwable {
+    public void ライフサイクル状態によってタスクがキャンセルされる_Alive() throws Throwable {
         AndroidThreadUtil.assertBackgroundThread();
         assertTrue(isTestingThread());
 
@@ -238,7 +238,8 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
                     .executeOn(ExecuteTarget.LocalQueue)
                     .completed((it, task) -> {
                         callbackCheck.set(Boolean.TRUE);
-                    }).start();
+                    })
+                    .start();
 
             item.onPause(); // アプリがバックグラウンドに移った
             assertFalse(rxTask.isCanceled());
@@ -252,6 +253,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
             } catch (TaskCanceledException e) {
                 Log.d(TAG, "Task Canceled");
             }
+
             assertEquals(callbackCheck.get(), Boolean.FALSE);     // コールバックは捨てられるので、呼びだされてはならない。
         } finally {
         }
@@ -405,7 +407,8 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
                     .executeOn(ExecuteTarget.LocalQueue)
                     .completed((it, task) -> {
                         fail();
-                    }).start();
+                    })
+                    .start();
 
             item.onPause(); // アプリがバックグラウンドに移った
             assertFalse(rxTask.isCanceled());
@@ -470,6 +473,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
         LifecycleItem item = new LifecycleItem();
         BackgroundTask rxTask;
         Holder<Boolean> callbackCheck = new Holder<>();
+        Holder<Boolean> cancelCheck = new Holder<>();
         callbackCheck.set(Boolean.FALSE);
         try {
             item.onResume();
@@ -487,7 +491,11 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
                     .executeOn(ExecuteTarget.LocalQueue)
                     .completed((it, task) -> {
                         fail();
-                    }).start();
+                    })
+                    .canceled(task -> {
+                        cancelCheck.set(Boolean.TRUE);
+                    })
+                    .start();
 
             item.onPause(); // アプリがバックグラウンドに移った
             assertEquals(item.mCallbackQueue.getCurrentState().getState(), Lifecycle.Event.ON_PAUSE);
@@ -510,6 +518,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
             Util.sleep(100);
 
             assertEquals(callbackCheck.get(), Boolean.FALSE);     // コールバックは捨てられるので、呼びだされてはならない。
+            assertEquals(cancelCheck.get(), Boolean.TRUE);
         } finally {
             item.onPause();
             item.onDestroy();
