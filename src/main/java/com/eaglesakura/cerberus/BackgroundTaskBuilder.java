@@ -2,22 +2,21 @@ package com.eaglesakura.cerberus;
 
 import com.eaglesakura.cerberus.error.TaskCanceledException;
 
-import org.reactivestreams.Subscriber;
-
+import android.app.Activity;
 import android.app.Dialog;
 import android.os.Looper;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 
-import java.util.concurrent.TimeUnit;
-
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Consumer;
 
 /**
+ * 非同期実行タスク用のBuilder
  *
+ * 実行対象のThreadは {@link ExecuteTarget} で指定する。デフォルトは {@link ExecuteTarget#GlobalQueue} で処理される。
+ * 実行結果は必ずUIThreadでハンドリングされる。
  */
 public class BackgroundTaskBuilder<T> {
     final PendingCallbackQueue mController;
@@ -35,27 +34,13 @@ public class BackgroundTaskBuilder<T> {
     BackgroundTask mTask = new BackgroundTask<>();
 
     /**
-     * チェーンの親となるビルダー
-     */
-    final BackgroundTaskBuilder<T> mParentBuilder;
-
-    /**
      * タスクをスタート済みであればtrue
      */
     boolean mStartedTask = false;
 
     public BackgroundTaskBuilder(PendingCallbackQueue subscriptionController) {
-        this(null, subscriptionController);
-    }
-
-    BackgroundTaskBuilder(BackgroundTaskBuilder parent, PendingCallbackQueue subscriptionController) {
-        mParentBuilder = parent;
         mController = subscriptionController;
         mTask.mCallbackQueue = mController;
-//        if (parent != null) {
-//            // キャンセルシグナルを引き継ぐ
-//            mTask.mUserCancelSignals.add(parent.mTask.mUserCancelSignals);
-//        }
     }
 
     /**
@@ -82,7 +67,7 @@ public class BackgroundTaskBuilder<T> {
         return this;
     }
 
-    public BackgroundTaskBuilder<T> cancelSignal(FragmentActivity activity) {
+    public BackgroundTaskBuilder<T> cancelSignal(Activity activity) {
         return cancelSignal(task -> activity == null || activity.isFinishing());
     }
 
@@ -113,53 +98,12 @@ public class BackgroundTaskBuilder<T> {
     }
 
     /**
-     * 処理にタイムアウトを付与する
-     */
-    public BackgroundTaskBuilder<T> timeout(long timeoutMs) {
-        mObservable.timeout(timeoutMs, TimeUnit.MILLISECONDS);
-        mTask.mTimeoutMs = timeoutMs;
-        return this;
-    }
-
-    /**
      * タスク名を指定する。
      * <p>
      * タスク名はそのままスレッド名として利用される。
      */
     public BackgroundTaskBuilder<T> name(String name) {
         mTask.mName = name;
-        return this;
-    }
-
-    /**
-     * エラー時のダミー戻り値を指定する。
-     */
-    public BackgroundTaskBuilder<T> errorReturn(BackgroundTask.ErrorReturn<T> action) {
-        mObservable.onErrorReturn(err -> action.call(err, (BackgroundTask<T>) mTask));
-        return this;
-    }
-
-    /**
-     * リトライの最大回数を指定する
-     */
-    public BackgroundTaskBuilder<T> retry(int num) {
-        mObservable.retry(num);
-        return this;
-    }
-
-    /**
-     * リトライチェック関数を指定する
-     */
-    public BackgroundTaskBuilder<T> retrySignal(BackgroundTask.Signal<T> action) {
-        mObservable.retry((num, error) -> action.is(mTask));
-        return this;
-    }
-
-    /**
-     * 詳細なリトライチェック関数を指定する
-     */
-    public BackgroundTaskBuilder<T> retry(BackgroundTask.RetrySignal<T> action) {
-        mObservable.retry((num, err) -> action.is(mTask, num, err));
         return this;
     }
 
@@ -269,41 +213,37 @@ public class BackgroundTaskBuilder<T> {
         mTask.mState = BackgroundTask.State.Pending;
         // キャンセルを購読対象と同期させる
 
-        if (mParentBuilder != null && !mParentBuilder.isStartedTask()) {
-            // 親がいるなら、親を開始する
-            mParentBuilder.start();
-        } else {
-            if (isStartedTask()) {
-                // 既にタスクが起動済みのため、再度起動することはできない
-                throw new IllegalStateException();
-            }
-            mStartedTask = true;
-            // 開始タイミングをズラす
-            mController.sHandler.post(() -> {
-                PendingCallbackQueue.State dumpState = mController.getCurrentState().dump();
-                BackgroundTask.Signal signal = task -> mController.isCanceled(mTask.mCallbackTime, dumpState);
-                mTask.mCancelSignals.add(signal);
-                mTask.mSubscription = mObservable.subscribe(
-                        // next = completeed
-                        next -> {
-                            mTask.mSubscription.dispose();
-                            mController.remove(mTask.mSubscription);
-                            mTask.mSubscription = null;
-                            mTask.setResult(next);
-                        },
-                        // error
-                        error -> {
-                            mTask.mSubscription.dispose();
-                            mController.remove(mTask.mSubscription);
-                            mTask.mSubscription = null;
-                            mTask.setError(error);
-                        }
-                );
-
-                // 購読対象に追加
-                mController.add(mTask.mCallbackTime, mTask.mSubscription);
-            });
+        if (isStartedTask()) {
+            // 既にタスクが起動済みのため、再度起動することはできない
+            throw new IllegalStateException();
         }
+
+        mStartedTask = true;
+        // 開始タイミングをズラす
+        mController.sHandler.post(() -> {
+            PendingCallbackQueue.State dumpState = mController.getCurrentState().dump();
+            BackgroundTask.Signal signal = task -> mController.isCanceled(mTask.mCallbackTime, dumpState);
+            mTask.mCancelSignals.add(signal);
+            mTask.mSubscription = mObservable.subscribe(
+                    // next = completeed
+                    next -> {
+                        mTask.mSubscription.dispose();
+                        mController.remove(mTask.mSubscription);
+                        mTask.mSubscription = null;
+                        mTask.setResult(next);
+                    },
+                    // error
+                    error -> {
+                        mTask.mSubscription.dispose();
+                        mController.remove(mTask.mSubscription);
+                        mTask.mSubscription = null;
+                        mTask.setError(error);
+                    }
+            );
+
+            // 購読対象に追加
+            mController.add(mTask.mCallbackTime, mTask.mSubscription);
+        });
         return mTask;
     }
 }

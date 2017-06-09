@@ -430,19 +430,11 @@ public class BackgroundTask<T> {
         void call(T it, BackgroundTask<T> task);
     }
 
-
     /**
      * 非同期処理後のコールバックを記述する
      */
     public interface ErrorAction<T> {
         void call(Throwable it, BackgroundTask<T> task);
-    }
-
-    /**
-     * 非同期処理後のコールバックを記述する
-     */
-    public interface ErrorReturn<T> {
-        T call(Throwable it, BackgroundTask<T> task);
     }
 
     /**
@@ -457,11 +449,4 @@ public class BackgroundTask<T> {
         boolean is(BackgroundTask<T> task);
     }
 
-
-    /**
-     * リトライチェック用
-     */
-    public interface RetrySignal<T> {
-        boolean is(BackgroundTask<T> task, int count, Throwable error);
-    }
 }
