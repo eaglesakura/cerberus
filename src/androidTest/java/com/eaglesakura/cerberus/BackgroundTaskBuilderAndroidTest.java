@@ -55,7 +55,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
         }
     }
 
-    //    @Test
+//    @Test
     public void タスクのメモリリークがないことを確認する() throws Throwable {
         AndroidThreadUtil.assertBackgroundThread();
         assertTrue(isTestingThread());

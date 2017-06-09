@@ -205,19 +205,23 @@ public class BackgroundTaskBuilder<T> {
                     throw new TaskCanceledException();
                 }
             } catch (Throwable e) {
-                it.onError(e);
+                if (!it.isDisposed()) {
+                    it.onError(e);
+                }
                 return;
             }
 
             // 実行完了をコールする
             synchronized (mTask) {
+                if (it.isDisposed()) {
+                    return;
+                }
                 it.onNext(result);
                 it.onComplete();
             }
         })
                 .subscribeOn(mController.getThreadController().getScheduler(mThreadTarget))
                 .observeOn(AndroidSchedulers.mainThread());
-//                .unsubscribeOn(AndroidSchedulers.mainThread());
         return this;
     }
 
