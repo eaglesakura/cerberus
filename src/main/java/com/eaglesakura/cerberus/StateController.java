@@ -16,12 +16,12 @@ abstract class StateController {
     /**
      * 強制的にキャンセルさせるならばtrue
      */
-    abstract boolean isCanceled(PendingCallbackQueue current, PendingCallbackQueue.State taskState);
+    abstract boolean isCanceled(PendingCallbackQueue current, LifecycleStateDump taskState);
 
     /**
      * 保留状態であればtrue
      */
-    abstract boolean isPending(PendingCallbackQueue current, PendingCallbackQueue.State taskState);
+    abstract boolean isPending(PendingCallbackQueue current, LifecycleStateDump taskState);
 
     /**
      * 処理を実行する
@@ -75,14 +75,14 @@ abstract class StateController {
     static class ForegroundController extends StateController {
 
         @Override
-        boolean isCanceled(PendingCallbackQueue current, PendingCallbackQueue.State taskState) {
-            PendingCallbackQueue.State currentState = current.getCurrentState();
+        boolean isCanceled(PendingCallbackQueue current, LifecycleStateDump taskState) {
+            LifecycleStateDump currentState = current.getCurrentState();
             return currentState.isDestroyed();
         }
 
         @Override
-        boolean isPending(PendingCallbackQueue current, PendingCallbackQueue.State taskState) {
-            PendingCallbackQueue.State currentState = current.getCurrentState();
+        boolean isPending(PendingCallbackQueue current, LifecycleStateDump taskState) {
+            LifecycleStateDump currentState = current.getCurrentState();
             return !currentState.isForeground();
         }
     }
@@ -95,14 +95,14 @@ abstract class StateController {
      */
     static class CurrentForegroundController extends StateController {
         @Override
-        boolean isCanceled(PendingCallbackQueue current, PendingCallbackQueue.State taskState) {
+        boolean isCanceled(PendingCallbackQueue current, LifecycleStateDump taskState) {
             // Stateが一度でも切り替わったら全部キャンセルである
-            PendingCallbackQueue.State currentState = current.getCurrentState();
+            LifecycleStateDump currentState = current.getCurrentState();
             return !currentState.equals(taskState);
         }
 
         @Override
-        boolean isPending(PendingCallbackQueue current, PendingCallbackQueue.State taskState) {
+        boolean isPending(PendingCallbackQueue current, LifecycleStateDump taskState) {
             // 保留は存在しない
             return false;
         }
@@ -113,14 +113,14 @@ abstract class StateController {
      */
     static class AliveController extends StateController {
         @Override
-        boolean isCanceled(PendingCallbackQueue current, PendingCallbackQueue.State taskState) {
-            PendingCallbackQueue.State currentState = current.getCurrentState();
+        boolean isCanceled(PendingCallbackQueue current, LifecycleStateDump taskState) {
+            LifecycleStateDump currentState = current.getCurrentState();
             return currentState.isDestroyed();
         }
 
         @Override
-        boolean isPending(PendingCallbackQueue current, PendingCallbackQueue.State taskState) {
-            PendingCallbackQueue.State currentState = current.getCurrentState();
+        boolean isPending(PendingCallbackQueue current, LifecycleStateDump taskState) {
+            LifecycleStateDump currentState = current.getCurrentState();
             return !currentState.isCreated();
         }
     }
@@ -130,12 +130,12 @@ abstract class StateController {
      */
     static class FireAndForgetController extends StateController {
         @Override
-        boolean isCanceled(PendingCallbackQueue current, PendingCallbackQueue.State taskState) {
+        boolean isCanceled(PendingCallbackQueue current, LifecycleStateDump taskState) {
             return false;
         }
 
         @Override
-        boolean isPending(PendingCallbackQueue current, PendingCallbackQueue.State taskState) {
+        boolean isPending(PendingCallbackQueue current, LifecycleStateDump taskState) {
             return false;
         }
     }

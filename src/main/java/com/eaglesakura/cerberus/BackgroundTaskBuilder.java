@@ -221,7 +221,7 @@ public class BackgroundTaskBuilder<T> {
         mStartedTask = true;
         // 開始タイミングをズラす
         mController.sHandler.post(() -> {
-            PendingCallbackQueue.State dumpState = mController.getCurrentState().dump();
+            LifecycleStateDump dumpState = mController.getCurrentState();
             BackgroundTask.Signal signal = task -> mController.isCanceled(mTask.mCallbackTime, dumpState);
             mTask.mCancelSignals.add(signal);
             mTask.mSubscription = mObservable.subscribe(

@@ -4,7 +4,7 @@
  * 2.5.x  : バージョン規則を変更
  */
 def ARTIFACT_VERSION = System.env.CIRCLE_TAG == null ?
-       "2.5" : System.env.CIRCLE_TAG.substring(System.env.CIRCLE_TAG.indexOf('v') + 1)
+        "2.5" : System.env.CIRCLE_TAG.substring(System.env.CIRCLE_TAG.indexOf('v') + 1)
 def REPOSITORY_NAME = "maven"
 def BINTRAY_LICENSES = ["MIT"]
 def BINTRAY_LABELS = ["android"]
@@ -57,6 +57,11 @@ dependencies {
         androidTestImplementation "com.eaglesakura:android-commons:2.3.0"
         androidTestImplementation "com.eaglesakura:android-devicetest-support:2.2.275"
     }
+
+    // Android Architecture Components
+    compile "android.arch.lifecycle:runtime:1.0.0-alpha1"
+    implementation "android.arch.lifecycle:extensions:1.0.0-alpha1"
+    annotationProcessor "android.arch.lifecycle:compiler:1.0.0-alpha1"
 }
 
 android {
