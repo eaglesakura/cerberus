@@ -315,7 +315,7 @@ public class BackgroundTask<T> {
     }
 
 
-    public BackgroundTask<T> completed(Action1<T> completedCallback) {
+    BackgroundTask<T> completed(Action1<T> completedCallback) {
         synchronized (this) {
             mCompletedCallback = completedCallback;
 
@@ -330,7 +330,7 @@ public class BackgroundTask<T> {
         }
     }
 
-    public BackgroundTask<T> canceled(Action0<T> cancelCallback) {
+    BackgroundTask<T> canceled(Action0<T> cancelCallback) {
         synchronized (this) {
             mCancelCallback = cancelCallback;
             if (mState == BackgroundTask.State.Finished && isCanceled()) {
@@ -340,7 +340,7 @@ public class BackgroundTask<T> {
         }
     }
 
-    public BackgroundTask<T> failed(ErrorAction<T> errorCallback) {
+    BackgroundTask<T> failed(ErrorAction<T> errorCallback) {
         synchronized (this) {
             mErrorCallback = errorCallback;
             if (mState == BackgroundTask.State.Finished) {
@@ -355,7 +355,7 @@ public class BackgroundTask<T> {
         }
     }
 
-    public BackgroundTask<T> finalized(Action0 finalizeCallback) {
+    BackgroundTask<T> finalized(Action0 finalizeCallback) {
         synchronized (this) {
             mFinalizeCallback = finalizeCallback;
             if (mState == State.Finished) {
