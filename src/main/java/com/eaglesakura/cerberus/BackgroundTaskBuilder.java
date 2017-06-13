@@ -150,7 +150,10 @@ public class BackgroundTaskBuilder<T> {
                 }
             } catch (Throwable e) {
                 if (!it.isDisposed()) {
-                    it.onError(e);
+                    try {
+                        it.onError(e);
+                    } catch (Throwable ee) {
+                    }
                 }
                 return;
             }
