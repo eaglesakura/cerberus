@@ -3,8 +3,9 @@ package com.eaglesakura.cerberus;
 
 import com.eaglesakura.cerberus.error.TaskCanceledException;
 
-import org.reactivestreams.Subscription;
-
+import android.arch.lifecycle.GenericLifecycleObserver;
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleOwner;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -13,13 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-import io.reactivex.Observable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
-import io.reactivex.internal.subscriptions.ArrayCompositeSubscription;
-import io.reactivex.subjects.BehaviorSubject;
 
 /**
  * 実行対象のスレッドと、コールバック対象のスレッドをそれぞれ管理する。
@@ -44,14 +40,9 @@ public class PendingCallbackQueue {
      */
     private List<StateController> mStateControllers = new ArrayList<>();
 
-    /**
-     * 初期ステートはNew
-     */
-    private State mState = new State(LifecycleState.NewObject, 0);
-
     private ThreadControllerImpl mThreadController = new ThreadControllerImpl();
 
-    private Observable<LifecycleEvent> mObservable;
+    private LifecycleStateFactory mStateFactory;
 
     public PendingCallbackQueue() {
         for (CallbackTime callbackTime : CallbackTime.values()) {
@@ -60,53 +51,37 @@ public class PendingCallbackQueue {
     }
 
     /**
-     * 現在認識されているステートを取得する
-     */
-    @Deprecated
-    public LifecycleState getState() {
-        return mState.getState();
-    }
-
-    /**
      * 現在の状態を取得する
      */
     @NonNull
-    public State getCurrentState() {
-        return mState;
+    LifecycleStateDump getCurrentState() {
+        return mStateFactory.getCurrentState();
     }
 
-    public ThreadControllerImpl getThreadController() {
+    ThreadControllerImpl getThreadController() {
         return mThreadController;
     }
 
-    public Observable<LifecycleEvent> getObservable() {
-        return mObservable;
-    }
-
-    public Disposable subscribe(Consumer<? super LifecycleEvent> onNext) {
-        return mObservable.subscribe(onNext);
-    }
-
-    /**
-     * ライフサイクルをバインドする
-     */
-    public PendingCallbackQueue bind(BehaviorSubject<LifecycleEvent> behavior) {
-        mObservable = behavior.subscribeOn(AndroidSchedulers.mainThread());
-        mObservable.subscribe(next -> {
-            // 継承されたActivityやFragmentはsuper.onの呼び出しで前後が生じるため、統一させるために必ずワンテンポ処理を遅らせる
-            sHandler.post(() -> {
-                mState = mState.nextState(next.getState());
-
-                if (mState.getState() == LifecycleState.OnDestroy) {
+    public PendingCallbackQueue bind(LifecycleOwner owner) {
+        mStateFactory = LifecycleStateFactory.newInstance(owner);
+        owner.getLifecycle().addObserver(new GenericLifecycleObserver() {
+            @Override
+            public void onStateChanged(LifecycleOwner source, Lifecycle.Event event) {
+                if (event == Lifecycle.Event.ON_DESTROY) {
                     mThreadController.dispose();
                     mSubscription.dispose();
                 }
 
                 // 保留タスクがあれば流すように促す
                 for (StateController ctrl : mStateControllers) {
-                    ctrl.onNext(this);
+                    ctrl.onNext(PendingCallbackQueue.this);
                 }
-            });
+            }
+
+            @Override
+            public Object getReceiver() {
+                return this;
+            }
         });
         return this;
     }
@@ -131,7 +106,7 @@ public class PendingCallbackQueue {
      * @param time      コールしたいタイミング
      * @param dumpState タスク開始時のステート
      */
-    public boolean isCanceled(CallbackTime time, State dumpState) {
+    public boolean isCanceled(CallbackTime time, LifecycleStateDump dumpState) {
         return getController(time).isCanceled(this, dumpState);
     }
 
@@ -141,32 +116,7 @@ public class PendingCallbackQueue {
      * 実行保留中であれば一旦キューに貯め、resumeのタイミングでキューを全て実行させる。
      */
     public void run(CallbackTime target, Runnable callback) {
-        getController(target).run(this, new PendingTask(callback, mState.dump()));
-    }
-
-    /**
-     * UnitTest用の空のコントローラを生成する
-     */
-    public static PendingCallbackQueue newUnitTestController() {
-        BehaviorSubject<LifecycleEvent> behavior = BehaviorSubject.createDefault(LifecycleEvent.wrap(LifecycleState.NewObject));
-        behavior.onNext(LifecycleEvent.wrap(LifecycleState.OnResume));
-
-        PendingCallbackQueue controller = new PendingCallbackQueue();
-        controller.bind(behavior);
-        return controller;
-    }
-
-    /**
-     * デフォルト構成で生成する
-     *
-     * 状態はNewObjectとなる
-     */
-    public static PendingCallbackQueue newInstance() {
-        BehaviorSubject<LifecycleEvent> behavior = BehaviorSubject.createDefault(LifecycleEvent.wrap(LifecycleState.NewObject));
-
-        PendingCallbackQueue controller = new PendingCallbackQueue();
-        controller.bind(behavior);
-        return controller;
+        getController(target).run(this, new PendingTask(callback, mStateFactory.getCurrentState()));
     }
 
     /**
@@ -226,18 +176,18 @@ public class PendingCallbackQueue {
         boolean isCanceled() throws Throwable;
     }
 
-    public static class PendingTask {
+    static class PendingTask {
         /**
          * タスク本体
          */
-        Runnable mAction;
+        final Runnable mAction;
 
         /**
          * タスクが発行されたタイミングでのステート
          */
-        State mDumpState;
+        final LifecycleStateDump mDumpState;
 
-        public PendingTask(Runnable action, State dumpState) {
+        public PendingTask(Runnable action, LifecycleStateDump dumpState) {
             mAction = action;
             mDumpState = dumpState;
         }
@@ -246,87 +196,8 @@ public class PendingCallbackQueue {
             mAction.run();
         }
 
-        public State getDumpState() {
+        public LifecycleStateDump getDumpState() {
             return mDumpState;
-        }
-    }
-
-
-    /**
-     * 現在のステートを管理する
-     */
-    public static class State {
-        /**
-         * 現在のステートを管理する
-         */
-        private final LifecycleState mState;
-
-        /**
-         * ステート変更番号
-         * 必ずインクリメントされる
-         */
-        private final int mStateChangeCount;
-
-        State(LifecycleState state, int changeNumber) {
-            mState = state;
-            mStateChangeCount = changeNumber;
-        }
-
-        public LifecycleState getState() {
-            return mState;
-        }
-
-        public int getStateChangeCount() {
-            return mStateChangeCount;
-        }
-
-        /**
-         * オブジェクトが作成状態であればtrue
-         */
-        public boolean isCreated() {
-            return mState.ordinal() >= LifecycleState.OnCreate.ordinal();
-        }
-
-        /**
-         * Foreground状態であればtrue
-         */
-        public boolean isForeground() {
-            return mState == LifecycleState.OnResume;
-        }
-
-        /**
-         * オブジェクトが廃棄状態であればtrue
-         */
-        public boolean isDestroyed() {
-            return mState.ordinal() >= LifecycleState.OnDestroy.ordinal();
-        }
-
-        public synchronized State nextState(LifecycleState nextLifecycle) {
-            return new State(nextLifecycle, mStateChangeCount + 1);
-        }
-
-        public State dump() {
-//            return new State(mState, mStateChangeCount);
-            return this;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            State state = (State) o;
-
-            if (mStateChangeCount != state.mStateChangeCount) return false;
-            return mState == state.mState;
-
-        }
-
-        @Override
-        public int hashCode() {
-            int result = mState != null ? mState.hashCode() : 0;
-            result = 31 * result + mStateChangeCount;
-            return result;
         }
     }
 }

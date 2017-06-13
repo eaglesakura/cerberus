@@ -9,53 +9,61 @@ import com.eaglesakura.util.Util;
 
 import org.junit.Test;
 
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleOwner;
+import android.arch.lifecycle.LifecycleRegistry;
 import android.util.Log;
-
-import io.reactivex.subjects.BehaviorSubject;
 
 public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
     static final String TAG = BackgroundTaskBuilderAndroidTest.class.getSimpleName();
 
-    class LifecycleItem {
-        BehaviorSubject<LifecycleEvent> mSubject = BehaviorSubject.createDefault(LifecycleEvent.wrap(LifecycleState.NewObject));
+    class LifecycleItem implements LifecycleOwner {
+
+        LifecycleRegistry mLifecycle;
+
+        @Override
+        public synchronized Lifecycle getLifecycle() {
+            if (mLifecycle == null) {
+                mLifecycle = new LifecycleRegistry(this);
+            }
+            return mLifecycle;
+        }
+
         PendingCallbackQueue mCallbackQueue = new PendingCallbackQueue();
 
         public LifecycleItem() {
-            mCallbackQueue.bind(mSubject);
-            next(LifecycleState.OnCreate);
-            next(LifecycleState.OnStart);
-        }
-
-        public void onCreate() {
-            next(LifecycleState.OnCreate);
+            mCallbackQueue.bind(this);
+            assertNotEquals(mLifecycle.getObserverCount(), 0);
+            next(Lifecycle.Event.ON_CREATE);
         }
 
         public void onResume() {
-            next(LifecycleState.OnResume);
+            next(Lifecycle.Event.ON_RESUME);
         }
 
         public void onPause() {
-            next(LifecycleState.OnPause);
+            next(Lifecycle.Event.ON_PAUSE);
         }
 
         public void onDestroy() {
-            next(LifecycleState.OnStop);
-            next(LifecycleState.OnDestroy);
+            next(Lifecycle.Event.ON_DESTROY);
         }
 
-        void next(LifecycleState state) {
-            UIHandler.postUI(() -> {
-                mSubject.onNext(LifecycleEvent.wrap(state));
+        private void next(Lifecycle.Event event) {
+            UIHandler.postUIorRun(() -> {
+                Log.d("Event", String.format("before req[%s] cur[%s]", event, mCallbackQueue.getCurrentState().getState()));
+                mLifecycle.handleLifecycleEvent(event);
+                Log.d("Event", String.format("after req[%s] cur[%s]", event, mCallbackQueue.getCurrentState().getState()));
             });
 
-            while (state != mCallbackQueue.getState()) {
+            while (event != mCallbackQueue.getCurrentState().getState()) {
                 Util.sleep(10);
             }
         }
     }
 
-//    @Test
+    //    @Test
     public void タスクのメモリリークがないことを確認する() throws Throwable {
         AndroidThreadUtil.assertBackgroundThread();
         assertTrue(isTestingThread());
@@ -206,7 +214,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
     }
 
     @Test
-    public void ライフサイクル状態によってタスクがキャンセルさる_Alive() throws Throwable {
+    public void ライフサイクル状態によってタスクがキャンセルされる_Alive() throws Throwable {
         AndroidThreadUtil.assertBackgroundThread();
         assertTrue(isTestingThread());
 
@@ -230,11 +238,13 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
                     .executeOn(ExecuteTarget.LocalQueue)
                     .completed((it, task) -> {
                         callbackCheck.set(Boolean.TRUE);
-                    }).start();
+                    })
+                    .start();
 
             item.onPause(); // アプリがバックグラウンドに移った
             assertFalse(rxTask.isCanceled());
             item.onDestroy(); // アプリが廃棄された
+            assertEquals(item.mCallbackQueue.getCurrentState().getState(), Lifecycle.Event.ON_DESTROY);
             assertTrue(rxTask.isCanceled());
             try {
                 rxTask.await(1000); // 処理が終わるまで待つ
@@ -243,6 +253,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
             } catch (TaskCanceledException e) {
                 Log.d(TAG, "Task Canceled");
             }
+
             assertEquals(callbackCheck.get(), Boolean.FALSE);     // コールバックは捨てられるので、呼びだされてはならない。
         } finally {
         }
@@ -282,8 +293,6 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
 
             assertEquals(callbackCheck.get(), Boolean.TRUE);     // コールバックが実行されて、setされる。
         } finally {
-            item.onPause();
-            item.onDestroy();
         }
     }
 
@@ -398,7 +407,8 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
                     .executeOn(ExecuteTarget.LocalQueue)
                     .completed((it, task) -> {
                         fail();
-                    }).start();
+                    })
+                    .start();
 
             item.onPause(); // アプリがバックグラウンドに移った
             assertFalse(rxTask.isCanceled());
@@ -463,6 +473,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
         LifecycleItem item = new LifecycleItem();
         BackgroundTask rxTask;
         Holder<Boolean> callbackCheck = new Holder<>();
+        Holder<Boolean> cancelCheck = new Holder<>();
         callbackCheck.set(Boolean.FALSE);
         try {
             item.onResume();
@@ -480,9 +491,14 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
                     .executeOn(ExecuteTarget.LocalQueue)
                     .completed((it, task) -> {
                         fail();
-                    }).start();
+                    })
+                    .canceled(task -> {
+                        cancelCheck.set(Boolean.TRUE);
+                    })
+                    .start();
 
             item.onPause(); // アプリがバックグラウンドに移った
+            assertEquals(item.mCallbackQueue.getCurrentState().getState(), Lifecycle.Event.ON_PAUSE);
 
             // 一度でもStateが変わったらキャンセル扱いである
             assertTrue(rxTask.isCanceled());
@@ -502,6 +518,7 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
             Util.sleep(100);
 
             assertEquals(callbackCheck.get(), Boolean.FALSE);     // コールバックは捨てられるので、呼びだされてはならない。
+            assertEquals(cancelCheck.get(), Boolean.TRUE);
         } finally {
             item.onPause();
             item.onDestroy();

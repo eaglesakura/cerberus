@@ -11,6 +11,7 @@ import android.support.v4.app.FragmentActivity;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.exceptions.UndeliverableException;
 
 /**
  * 非同期実行タスク用のBuilder
@@ -150,7 +151,11 @@ public class BackgroundTaskBuilder<T> {
                 }
             } catch (Throwable e) {
                 if (!it.isDisposed()) {
-                    it.onError(e);
+                    try {
+                        it.onError(e);
+                    } catch (UndeliverableException ee) {
+                        // disposed!
+                    }
                 }
                 return;
             }
@@ -221,7 +226,7 @@ public class BackgroundTaskBuilder<T> {
         mStartedTask = true;
         // 開始タイミングをズラす
         mController.sHandler.post(() -> {
-            PendingCallbackQueue.State dumpState = mController.getCurrentState().dump();
+            LifecycleStateDump dumpState = mController.getCurrentState();
             BackgroundTask.Signal signal = task -> mController.isCanceled(mTask.mCallbackTime, dumpState);
             mTask.mCancelSignals.add(signal);
             mTask.mSubscription = mObservable.subscribe(
