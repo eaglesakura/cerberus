@@ -11,6 +11,7 @@ import android.support.v4.app.FragmentActivity;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.exceptions.UndeliverableException;
 
 /**
  * 非同期実行タスク用のBuilder
@@ -152,7 +153,8 @@ public class BackgroundTaskBuilder<T> {
                 if (!it.isDisposed()) {
                     try {
                         it.onError(e);
-                    } catch (Throwable ee) {
+                    } catch (UndeliverableException ee) {
+                        // disposed!
                     }
                 }
                 return;
