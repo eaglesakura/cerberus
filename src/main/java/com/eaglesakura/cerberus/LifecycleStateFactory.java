@@ -36,37 +36,37 @@ class LifecycleStateFactory {
 
         LifecycleStateFactory result = new LifecycleStateFactory();
         LifecycleObserver observer = new LifecycleObserver() {
-            @OnLifecycleEvent({Lifecycle.Event.ON_CREATE})
+            @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
             public void onCreate() {
 //                Log.d("Event", "Call/onCreate");
                 result.onNextState(Lifecycle.Event.ON_CREATE);
             }
 
-            @OnLifecycleEvent({Lifecycle.Event.ON_START})
+            @OnLifecycleEvent(Lifecycle.Event.ON_START)
             public void onStart() {
 //                Log.d("Event", "Call/onStart");
                 result.onNextState(Lifecycle.Event.ON_START);
             }
 
-            @OnLifecycleEvent({Lifecycle.Event.ON_RESUME})
+            @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
             public void onResume() {
 //                Log.d("Event", "Call/onResume");
                 result.onNextState(Lifecycle.Event.ON_RESUME);
             }
 
-            @OnLifecycleEvent({Lifecycle.Event.ON_PAUSE})
+            @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
             public void onPause() {
 //                Log.d("Event", "Call/onPause");
                 result.onNextState(Lifecycle.Event.ON_PAUSE);
             }
 
-            @OnLifecycleEvent({Lifecycle.Event.ON_STOP})
+            @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
             public void onStop() {
 //                Log.d("Event", "Call/onStop");
                 result.onNextState(Lifecycle.Event.ON_STOP);
             }
 
-            @OnLifecycleEvent({Lifecycle.Event.ON_DESTROY})
+            @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
             public void onDestroy() {
 //                Log.d("Event", "Call/onDestroy");
                 result.onNextState(Lifecycle.Event.ON_DESTROY);
