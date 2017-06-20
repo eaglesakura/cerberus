@@ -20,7 +20,7 @@ buildscript {
         maven { url "https://dl.bintray.com/eaglesakura/maven/" }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.0-alpha3'
+        classpath 'com.android.tools.build:gradle:3.0.0-alpha4'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
     }
@@ -60,9 +60,9 @@ dependencies {
     }
 
     // Android Architecture Components
-    implementation "android.arch.lifecycle:runtime:1.0.0-alpha1"
-    implementation "android.arch.lifecycle:extensions:1.0.0-alpha1"
-    annotationProcessor "android.arch.lifecycle:compiler:1.0.0-alpha1"
+    implementation "android.arch.lifecycle:runtime:1.0.0-alpha3"
+    implementation "android.arch.lifecycle:extensions:1.0.0-alpha3"
+    annotationProcessor "android.arch.lifecycle:compiler:1.0.0-alpha3"
 }
 
 android {
