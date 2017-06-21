@@ -149,7 +149,7 @@ public class BackgroundTaskBuilder<T> {
                 if (mTask.isCanceled()) {
                     throw new TaskCanceledException();
                 }
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 if (!it.isDisposed()) {
                     try {
                         it.onError(e);
@@ -242,7 +242,11 @@ public class BackgroundTaskBuilder<T> {
                         mTask.mSubscription.dispose();
                         mController.remove(mTask.mSubscription);
                         mTask.mSubscription = null;
-                        mTask.setError(error);
+                        if (error instanceof Exception) {
+                            mTask.setError(((Exception) error));
+                        } else {
+                            throw (Error) error;
+                        }
                     }
             );
 

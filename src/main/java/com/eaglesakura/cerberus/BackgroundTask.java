@@ -31,7 +31,7 @@ public class BackgroundTask<T> {
     /**
      * 受信したエラー
      */
-    Throwable mError;
+    Exception mError;
 
     /**
      * 戻り値
@@ -159,7 +159,7 @@ public class BackgroundTask<T> {
         try {
             await(timeoutMs);
             return true;
-        } catch (Throwable e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
@@ -171,7 +171,7 @@ public class BackgroundTask<T> {
     public void safeAwait() {
         try {
             await();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -181,7 +181,7 @@ public class BackgroundTask<T> {
      * <p>
      * timeout等やコールバックと同居するため、実装はただのwaitである。
      */
-    public T await(long timeoutMs) throws Throwable {
+    public T await(long timeoutMs) throws Exception {
         final long START_TIME = System.currentTimeMillis();
         while (!isFinished() && ((System.currentTimeMillis() - START_TIME) < timeoutMs)) {
             if (isCanceled()) {
@@ -206,21 +206,21 @@ public class BackgroundTask<T> {
     /**
      * 処理の完了待ちを行う
      */
-    public T await() throws Throwable {
+    public T await() throws Exception {
         return await(mTimeoutMs);
     }
 
     /**
      * エラー内容を取得する
      */
-    public Throwable getError() {
+    public Exception getError() {
         return mError;
     }
 
     /**
      * エラーを持っていたら投げる
      */
-    public void throwIfError() throws Throwable {
+    public void throwIfError() throws Exception {
         if (mError != null) {
             throw mError;
         }
@@ -298,7 +298,7 @@ public class BackgroundTask<T> {
         }
     }
 
-    private void handleFailed(Throwable error) {
+    private void handleFailed(Exception error) {
         // タスクがキャンセルされた場合
         if (mErrorCallback == null) {
             return;
@@ -383,7 +383,7 @@ public class BackgroundTask<T> {
                     handleFinalize();
                     // 次のタスクを実行開始する
                     handleChain();
-                } catch (Throwable error) {
+                } catch (Exception error) {
                     // Completed処理に失敗した
                     mResult = null;
                     setError(error);
@@ -392,7 +392,7 @@ public class BackgroundTask<T> {
         });
     }
 
-    void setError(Throwable error) {
+    void setError(Exception error) {
         synchronized (this) {
             mState = State.Finished;
             mError = error;
@@ -412,7 +412,7 @@ public class BackgroundTask<T> {
      * 非同期処理を記述する
      */
     public interface Async<T> {
-        T call(BackgroundTask<T> task) throws Throwable;
+        T call(BackgroundTask<T> task) throws Exception;
     }
 
     /**
@@ -433,7 +433,7 @@ public class BackgroundTask<T> {
      * 非同期処理後のコールバックを記述する
      */
     public interface ErrorAction<T> {
-        void call(Throwable it, BackgroundTask<T> task);
+        void call(Exception it, BackgroundTask<T> task);
     }
 
     /**

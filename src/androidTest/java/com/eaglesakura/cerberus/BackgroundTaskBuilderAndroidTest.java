@@ -5,6 +5,7 @@ import com.eaglesakura.android.thread.UIHandler;
 import com.eaglesakura.android.util.AndroidThreadUtil;
 import com.eaglesakura.cerberus.error.TaskCanceledException;
 import com.eaglesakura.thread.Holder;
+import com.eaglesakura.util.RandomUtil;
 import com.eaglesakura.util.Util;
 
 import org.junit.Test;
@@ -79,8 +80,12 @@ public class BackgroundTaskBuilderAndroidTest extends DeviceTestCase {
                                 byte[] buffer;
 
                                 @Override
-                                public byte[] call(BackgroundTask<byte[]> task) throws Throwable {
+                                public byte[] call(BackgroundTask<byte[]> task) throws Exception {
                                     buffer = new byte[1024 * 1024];
+                                    // ランダムで書き込む
+                                    for (int i = 0; i < buffer.length; ++i) {
+                                        buffer[i] = RandomUtil.randInt8();
+                                    }
                                     return buffer;
                                 }
                             })
