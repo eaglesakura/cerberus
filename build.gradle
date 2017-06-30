@@ -36,33 +36,21 @@ apply plugin: 'com.android.library'
 group = "com.eaglesakura"
 version = ARTIFACT_VERSION + getArtifactVersionSuffix()
 
-// Local or maven
-if (!hasProperty("EGLIBRARY_COMPILE_LOCAL")) {
-    ext.EGLIBRARY_COMPILE_LOCAL = false
-}
-
 dependencies {
     compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
     compile 'io.reactivex.rxjava2:rxjava:2.1.0'
     implementation "com.android.support:support-annotations:25.3.1"
     implementation "com.android.support:support-v4:25.3.1"
 
-    if (EGLIBRARY_COMPILE_LOCAL) {
-        testImplementation project(":eglibrary:android-unittest-support")
-
-        androidTestImplementation project(":eglibrary:android-commons")
-        androidTestImplementation project(":eglibrary:android-devicetest-support")
-    } else {
-        testImplementation "com.eaglesakura:android-unittest-support:1.5.211"
-
-        androidTestImplementation "com.eaglesakura:android-commons:2.3.0"
-        androidTestImplementation "com.eaglesakura:android-devicetest-support:2.2.275"
-    }
-
     // Android Architecture Components
     implementation "android.arch.lifecycle:runtime:1.0.0-alpha3"
     implementation "android.arch.lifecycle:extensions:1.0.0-alpha3"
     annotationProcessor "android.arch.lifecycle:compiler:1.0.0-alpha3"
+
+    testImplementation "com.eaglesakura:android-unittest-support:1.5.211"
+
+    androidTestImplementation "com.eaglesakura:android-commons:2.3.0"
+    androidTestImplementation "com.eaglesakura:android-devicetest-support:2.2.275"
 }
 
 android {
