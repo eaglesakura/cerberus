@@ -80,6 +80,7 @@ public class BackgroundTask<T> {
     /**
      * チェーン実行されるタスク
      */
+    @Deprecated
     private BackgroundTaskBuilder mChainTask;
 
     /**
@@ -321,6 +322,7 @@ public class BackgroundTask<T> {
         mCompletedCallback.call(next, this);
     }
 
+    @Deprecated
     private void handleChain() {
         // 連続実行タスクが残っているなら、チェーンで実行を開始する
         if (mChainTask != null) {

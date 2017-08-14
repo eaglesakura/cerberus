@@ -2,12 +2,14 @@ package com.eaglesakura.cerberus;
 
 import com.eaglesakura.cerberus.error.TaskCanceledException;
 import com.eaglesakura.cerberus.lambda.Action1;
+import com.eaglesakura.cerberus.lambda.CancelCallback;
 
 import android.app.Activity;
 import android.app.Dialog;
 import android.os.Looper;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.os.CancellationSignal;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
@@ -67,6 +69,17 @@ public class BackgroundTaskBuilder<T> {
     public BackgroundTaskBuilder<T> cancelSignal(BackgroundTask.Signal signal) {
         mTask.mCancelSignals.add(signal);
         return this;
+    }
+
+    /**
+     * ユーザのキャンセルチェックを有効化する
+     */
+    public BackgroundTaskBuilder<T> cancelSignal(CancelCallback signal) {
+        return cancelSignal(task -> signal.isCanceled());
+    }
+
+    public BackgroundTaskBuilder<T> cancelSignal(CancellationSignal signal) {
+        return cancelSignal(task -> signal.isCanceled());
     }
 
     @Deprecated
