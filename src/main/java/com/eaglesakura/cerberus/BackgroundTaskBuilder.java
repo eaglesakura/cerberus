@@ -1,6 +1,7 @@
 package com.eaglesakura.cerberus;
 
 import com.eaglesakura.cerberus.error.TaskCanceledException;
+import com.eaglesakura.cerberus.lambda.Action1;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -22,22 +23,22 @@ import io.reactivex.exceptions.UndeliverableException;
 public class BackgroundTaskBuilder<T> {
     final PendingCallbackQueue mController;
 
-    Observable<T> mObservable;
+    private Observable<T> mObservable;
 
     /**
      * 標準ではプロセス共有スレッドで実行される
      */
-    ExecuteTarget mThreadTarget = ExecuteTarget.GlobalParallel;
+    private ExecuteTarget mThreadTarget = ExecuteTarget.GlobalParallel;
 
     /**
      * Task
      */
-    BackgroundTask mTask = new BackgroundTask<>();
+    private BackgroundTask mTask = new BackgroundTask<>();
 
     /**
      * タスクをスタート済みであればtrue
      */
-    boolean mStartedTask = false;
+    private boolean mStartedTask = false;
 
     public BackgroundTaskBuilder(PendingCallbackQueue subscriptionController) {
         mController = subscriptionController;
@@ -68,10 +69,12 @@ public class BackgroundTaskBuilder<T> {
         return this;
     }
 
+    @Deprecated
     public BackgroundTaskBuilder<T> cancelSignal(Activity activity) {
         return cancelSignal(task -> activity == null || activity.isFinishing());
     }
 
+    @Deprecated
     public BackgroundTaskBuilder<T> cancelSignal(Fragment fragment) {
         return cancelSignal(task -> {
             if (fragment == null) {
@@ -86,6 +89,7 @@ public class BackgroundTaskBuilder<T> {
     /**
      * ユーザーのキャンセルチェックをダイアログと同期する
      */
+    @Deprecated
     public BackgroundTaskBuilder<T> cancelSignal(Dialog dialog) {
         return cancelSignal(task -> !dialog.isShowing());
     }
@@ -93,6 +97,7 @@ public class BackgroundTaskBuilder<T> {
     /**
      * ダイアログに合わせてキャンセルチェックとキャンセル挙動を設定する
      */
+    @Deprecated
     public BackgroundTaskBuilder<T> cancelSignal(Dialog dialog, BackgroundTask.Action0<T> callback) {
         return canceled(callback).
                 cancelSignal(task -> !dialog.isShowing());
@@ -206,6 +211,26 @@ public class BackgroundTaskBuilder<T> {
         return this;
     }
 
+    public BackgroundTaskBuilder<T> completed(Runnable action) {
+        return completed((result, task) -> action.run());
+    }
+
+    public BackgroundTaskBuilder<T> completed(Action1<T> action) {
+        return completed((result, task) -> action.action(result));
+    }
+
+    public BackgroundTaskBuilder<T> failed(Runnable action) {
+        return failed((error, task) -> action.run());
+    }
+
+    public BackgroundTaskBuilder<T> failed(Action1<Exception> action) {
+        return failed((error, task) -> action.action(error));
+    }
+
+    public BackgroundTaskBuilder<T> finalized(Runnable action) {
+        return finalized(task -> action.run());
+    }
+
     public boolean isStartedTask() {
         return mStartedTask;
     }
@@ -220,7 +245,7 @@ public class BackgroundTaskBuilder<T> {
 
         if (isStartedTask()) {
             // 既にタスクが起動済みのため、再度起動することはできない
-            throw new IllegalStateException();
+            throw new IllegalStateException("Task is started!");
         }
 
         mStartedTask = true;
