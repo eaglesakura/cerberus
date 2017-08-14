@@ -5,7 +5,7 @@
  * 3.0.x  : Android Architecture Components対応
  */
 def ARTIFACT_VERSION = System.env.CIRCLE_TAG == null ?
-       "3.0" : System.env.CIRCLE_TAG.substring(System.env.CIRCLE_TAG.indexOf('v') + 1)
+        "3.0" : System.env.CIRCLE_TAG.substring(System.env.CIRCLE_TAG.indexOf('v') + 1)
 def REPOSITORY_NAME = "maven"
 def BINTRAY_LICENSES = ["MIT"]
 def BINTRAY_LABELS = ["android"]
@@ -47,10 +47,20 @@ dependencies {
     implementation "android.arch.lifecycle:extensions:1.0.0-alpha8"
     annotationProcessor "android.arch.lifecycle:compiler:1.0.0-alpha8"
 
-    testImplementation "com.eaglesakura:android-unittest-support:1.6.0"
 
+
+    testImplementation("com.eaglesakura:android-unittest-support:1.6.0") {
+        exclude(group: "com.eaglesakura", module: "java-commons")
+        exclude(group: "com.eaglesakura", module: "android-commons")
+        exclude(group: "com.android.support")
+    }
+    androidTestImplementation("com.eaglesakura:android-devicetest-support:2.3.1") {
+        exclude(group: "com.eaglesakura", module: "java-commons")
+        exclude(group: "com.eaglesakura", module: "android-commons")
+        exclude(group: "com.android.support")
+    }
     androidTestImplementation "com.eaglesakura:android-commons:2.3.build-35"
-    androidTestImplementation "com.eaglesakura:android-devicetest-support:2.3.1"
+    androidTestImplementation "com.android.support:appcompat-v7:26.0.1"
 }
 
 android {
