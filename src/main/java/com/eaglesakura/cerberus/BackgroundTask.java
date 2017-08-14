@@ -4,6 +4,8 @@ import com.eaglesakura.cerberus.error.TaskException;
 import com.eaglesakura.cerberus.error.TaskCanceledException;
 import com.eaglesakura.cerberus.error.TaskTimeoutException;
 
+import android.support.annotation.NonNull;
+
 import java.io.InterruptedIOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -31,12 +33,12 @@ public class BackgroundTask<T> {
     /**
      * 受信したエラー
      */
-    Exception mError;
+    private Exception mError;
 
     /**
      * 戻り値
      */
-    T mResult;
+    private T mResult;
 
     /**
      * 現在の処理ステート
@@ -58,27 +60,27 @@ public class BackgroundTask<T> {
     /**
      * 完了時処理を記述する
      */
-    BackgroundTask.Action1<T> mCompletedCallback;
+    private BackgroundTask.Action1<T> mCompletedCallback;
 
     /**
      * キャンセル時の処理を記述する
      */
-    BackgroundTask.Action0<T> mCancelCallback;
+    private BackgroundTask.Action0<T> mCancelCallback;
 
     /**
      * エラー時の処理を記述する
      */
-    BackgroundTask.ErrorAction<T> mErrorCallback;
+    private BackgroundTask.ErrorAction<T> mErrorCallback;
 
     /**
      * 最終的に必ず呼び出される処理
      */
-    BackgroundTask.Action0 mFinalizeCallback;
+    private BackgroundTask.Action0 mFinalizeCallback;
 
     /**
      * チェーン実行されるタスク
      */
-    BackgroundTaskBuilder mChainTask;
+    private BackgroundTaskBuilder mChainTask;
 
     /**
      * タスク名
@@ -88,7 +90,8 @@ public class BackgroundTask<T> {
     /**
      * デフォルトのタイムアウト指定
      */
-    long mTimeoutMs = 1000 * 60 * 60;
+    @Deprecated
+    private long mTimeoutMs = 1000 * 60 * 60;
 
     public enum State {
         /**
@@ -155,6 +158,7 @@ public class BackgroundTask<T> {
     /**
      * awaitを行い、結果を捨てる
      */
+    @Deprecated
     public boolean safeAwait(long timeoutMs) {
         try {
             await(timeoutMs);
@@ -168,6 +172,7 @@ public class BackgroundTask<T> {
     /**
      * awaitを行い、結果を捨てる
      */
+    @Deprecated
     public void safeAwait() {
         try {
             await();
@@ -177,10 +182,35 @@ public class BackgroundTask<T> {
     }
 
     /**
+     * 処理待ちを行い、結果を取得する。
+     * 内部でスピンロックするため、明示的にスピンロックを抜けるためには引数cancelCallbackを使用する
+     */
+    public T await(@NonNull PendingCallbackQueue.CancelCallback cancelCallback) throws Exception {
+        while (!isFinished() && !cancelCallback.isCanceled()) {
+            if (isCanceled()) {
+                throw new TaskCanceledException();
+            }
+
+            try {
+                Thread.sleep(1);
+            } catch (Exception e) {
+            }
+        }
+        throwIfError();
+
+        if (!isFinished()) {
+            throw new TaskTimeoutException();
+        }
+
+        return mResult;
+    }
+
+    /**
      * 処理待ちを行う
      * <p>
      * timeout等やコールバックと同居するため、実装はただのwaitである。
      */
+    @Deprecated
     public T await(long timeoutMs) throws Exception {
         final long START_TIME = System.currentTimeMillis();
         while (!isFinished() && ((System.currentTimeMillis() - START_TIME) < timeoutMs)) {
@@ -206,6 +236,7 @@ public class BackgroundTask<T> {
     /**
      * 処理の完了待ちを行う
      */
+    @Deprecated
     public T await() throws Exception {
         return await(mTimeoutMs);
     }

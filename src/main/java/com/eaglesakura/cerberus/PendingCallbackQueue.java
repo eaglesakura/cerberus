@@ -173,7 +173,7 @@ public class PendingCallbackQueue {
     }
 
     public interface CancelCallback {
-        boolean isCanceled() throws Throwable;
+        boolean isCanceled() throws Exception;
     }
 
     static class PendingTask {
