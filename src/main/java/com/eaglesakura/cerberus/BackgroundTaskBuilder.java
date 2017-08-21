@@ -41,6 +41,7 @@ public class BackgroundTaskBuilder<T> {
      * タスクをスタート済みであればtrue
      */
     private boolean mStartedTask = false;
+    private BackgroundTask.Async<T> mAsyncTask;
 
     public BackgroundTaskBuilder(PendingCallbackQueue subscriptionController) {
         mController = subscriptionController;
@@ -132,10 +133,6 @@ public class BackgroundTaskBuilder<T> {
      * 指定されていない場合は何もしない。
      */
     void bindThreadName() {
-        if (mTask.mName == null) {
-            return;
-        }
-
         Thread current = Thread.currentThread();
         if (current.equals(Looper.getMainLooper().getThread())) {
             // UIスレッド名は変更できない
@@ -143,7 +140,7 @@ public class BackgroundTaskBuilder<T> {
         }
 
         try {
-            Thread.currentThread().setName("RxTask::" + mTask.mName);
+            Thread.currentThread().setName("RxTask:" + mTask.mName + ":" + mThreadTarget);
         } catch (Exception e) {
 
         }
@@ -152,43 +149,8 @@ public class BackgroundTaskBuilder<T> {
     /**
      * 非同期処理を指定する
      */
-    public BackgroundTaskBuilder<T> async(BackgroundTask.Async<T> subscribe) {
-        mObservable = Observable.create((ObservableEmitter<T> it) -> {
-            synchronized (mTask) {
-                mTask.mState = BackgroundTask.State.Running;
-                bindThreadName();
-            }
-
-            //  非同期処理中はロックを外す
-            T result;
-            try {
-                result = subscribe.call((BackgroundTask<T>) mTask);
-
-                if (mTask.isCanceled()) {
-                    throw new TaskCanceledException();
-                }
-            } catch (Exception e) {
-                if (!it.isDisposed()) {
-                    try {
-                        it.onError(e);
-                    } catch (UndeliverableException ee) {
-                        // disposed!
-                    }
-                }
-                return;
-            }
-
-            // 実行完了をコールする
-            synchronized (mTask) {
-                if (it.isDisposed()) {
-                    return;
-                }
-                it.onNext(result);
-                it.onComplete();
-            }
-        })
-                .subscribeOn(mController.getThreadController().getScheduler(mThreadTarget))
-                .observeOn(AndroidSchedulers.mainThread());
+    public BackgroundTaskBuilder<T> async(BackgroundTask.Async<T> task) {
+        mAsyncTask = task;
         return this;
     }
 
@@ -267,6 +229,42 @@ public class BackgroundTaskBuilder<T> {
             LifecycleStateDump dumpState = mController.getCurrentState();
             BackgroundTask.Signal signal = task -> mController.isCanceled(mTask.mCallbackTime, dumpState);
             mTask.mCancelSignals.add(signal);
+            mObservable = Observable.create((ObservableEmitter<T> it) -> {
+                synchronized (mTask) {
+                    mTask.mState = BackgroundTask.State.Running;
+                    bindThreadName();
+                }
+
+                //  非同期処理中はロックを外す
+                T result;
+                try {
+                    result = mAsyncTask.call((BackgroundTask<T>) mTask);
+
+                    if (mTask.isCanceled()) {
+                        throw new TaskCanceledException();
+                    }
+                } catch (Exception e) {
+                    if (!it.isDisposed()) {
+                        try {
+                            it.onError(e);
+                        } catch (UndeliverableException ee) {
+                            // disposed!
+                        }
+                    }
+                    return;
+                }
+
+                // 実行完了をコールする
+                synchronized (mTask) {
+                    if (it.isDisposed()) {
+                        return;
+                    }
+                    it.onNext(result);
+                    it.onComplete();
+                }
+            })
+                    .subscribeOn(mController.getThreadController().getScheduler(mThreadTarget))
+                    .observeOn(AndroidSchedulers.mainThread());
             mTask.mSubscription = mObservable.subscribe(
                     // next = completeed
                     next -> {
