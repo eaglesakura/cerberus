@@ -13,6 +13,7 @@ import android.support.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
@@ -43,6 +44,8 @@ public class PendingCallbackQueue {
     private ThreadControllerImpl mThreadController = new ThreadControllerImpl();
 
     private LifecycleStateFactory mStateFactory;
+
+    private static final AtomicInteger sInstanceId = new AtomicInteger();
 
     public PendingCallbackQueue() {
         for (CallbackTime callbackTime : CallbackTime.values()) {
