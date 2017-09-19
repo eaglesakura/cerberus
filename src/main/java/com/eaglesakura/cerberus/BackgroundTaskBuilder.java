@@ -41,6 +41,7 @@ public class BackgroundTaskBuilder<T> {
      * タスクをスタート済みであればtrue
      */
     private boolean mStartedTask = false;
+
     private BackgroundTask.Async<T> mAsyncTask;
 
     public BackgroundTaskBuilder(PendingCallbackQueue subscriptionController) {
@@ -121,9 +122,12 @@ public class BackgroundTaskBuilder<T> {
      * タスク名を指定する。
      * <p>
      * タスク名はそのままスレッド名として利用される。
+     *
+     * Deprecated, 使われることが無いので、このメソッドは将来的に廃止される
      */
+    @Deprecated
     public BackgroundTaskBuilder<T> name(String name) {
-        mTask.mName = name;
+//        mTask.mName = name;
         return this;
     }
 
@@ -140,7 +144,10 @@ public class BackgroundTaskBuilder<T> {
         }
 
         try {
-            Thread.currentThread().setName("RxTask:" + mTask.mName + ":" + mThreadTarget);
+            Thread.currentThread().setName("Cerberus/" + mController.hashCode() +
+                    "/" + mThreadTarget +
+                    "/" + mTask.mCallbackTime
+            );
         } catch (Exception e) {
 
         }

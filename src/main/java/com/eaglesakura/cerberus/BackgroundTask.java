@@ -84,11 +84,6 @@ public class BackgroundTask<T> {
     private BackgroundTaskBuilder mChainTask;
 
     /**
-     * タスク名
-     */
-    String mName = "Task::" + getClass().getName();
-
-    /**
      * デフォルトのタイムアウト指定
      */
     @Deprecated
