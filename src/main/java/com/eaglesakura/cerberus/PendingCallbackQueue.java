@@ -77,11 +77,6 @@ public class PendingCallbackQueue {
                     ctrl.onNext(PendingCallbackQueue.this);
                 }
             }
-
-            @Override
-            public Object getReceiver() {
-                return this;
-            }
         });
         return this;
     }
